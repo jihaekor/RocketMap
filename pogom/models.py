@@ -852,15 +852,10 @@ class ScannedLocation(BaseModel):
 
     @classmethod
     def get_by_locs(cls, locs):
-        lats, lons = [], []
-        for loc in locs:
-            lats.append(loc[0])
-            lons.append(loc[1])
-
+        cellids = [cellid(loc) for loc in locs]
         query = (cls
                  .select()
-                 .where((ScannedLocation.latitude << lats) &
-                        (ScannedLocation.longitude << lons))
+                 .where(ScannedLocation.cellid << cellids)
                  .dicts())
 
         d = {}
@@ -878,10 +873,10 @@ class ScannedLocation(BaseModel):
     # Return value of a particular scan from loc, or default dict if not found.
     @classmethod
     def get_by_loc(cls, loc):
+        cellid = cellid(loc)
         query = (cls
                  .select()
-                 .where((ScannedLocation.latitude == loc[0]) &
-                        (ScannedLocation.longitude == loc[1]))
+                 .where(ScannedLocation.cellid == cellid)
                  .dicts())
 
         return query[0] if len(list(query)) else cls.new_loc(loc)
