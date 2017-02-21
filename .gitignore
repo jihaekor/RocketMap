@@ -1,3 +1,4 @@
+*.out
 *.pyc
 *.idea
 *.db
@@ -30,3 +31,4 @@ static/pixel_icons/*.png
 !contrib/supervisord/install-reinstall.sh
 !static/data/*
 !static/icons/hsl*.png
+*.zip
