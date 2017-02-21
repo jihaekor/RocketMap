@@ -689,8 +689,7 @@ class SpeedScan(HexSearch):
         start = time.time()
 
         # prefetch all scanned locations
-        locs = [scan['loc'] for scan in self.scans.values()]
-        scanned_locations = ScannedLocation.get_by_locs(locs)
+        scanned_locations = ScannedLocation.get_by_cells(self.scans.keys())
 
         # extract all spawnpoints into a dict with spawnpoint
         # id -> spawnpoint for easy access later
