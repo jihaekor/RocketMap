@@ -344,7 +344,7 @@ def worker_status_db_thread(threads_status, name, db_updates_queue):
 
 # The main search loop that keeps an eye on the over all process.
 def search_overseer_thread(args, new_location_queue, pause_bit, heartb,
-                           db_updates_queue, wh_queue):
+                           db_updates_queue, wh_queue, db):
 
     log.info('Search overseer starting...')
 
@@ -437,9 +437,14 @@ def search_overseer_thread(args, new_location_queue, pause_bit, heartb,
             search_items_queue = Queue()
             # Create the appropriate type of scheduler to handle the search
             # queue.
-            scheduler = schedulers.SchedulerFactory.get_scheduler(
-                args.scheduler, [search_items_queue], threadStatus, args)
-
+            # Pass DB for SpeedScan to be able to use optimized queries
+            if args.scheduler == 'SpeedScan':
+                scheduler = schedulers.SchedulerFactory.get_scheduler(
+                    args.scheduler, [search_items_queue], threadStatus, db,
+                    args)
+            else:
+                scheduler = schedulers.SchedulerFactory.get_scheduler(
+                    args.scheduler, [search_items_queue], threadStatus, args)
             scheduler_array.append(scheduler)
             search_items_queue_array.append(search_items_queue)
 

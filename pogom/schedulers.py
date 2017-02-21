@@ -474,11 +474,12 @@ class SpawnScan(BaseScheduler):
 class SpeedScan(HexSearch):
 
     # Call base initialization, set step_distance
-    def __init__(self, queues, status, args):
+    def __init__(self, queues, status, db, args):
         super(SpeedScan, self).__init__(queues, status, args)
         self.refresh_date = datetime.utcnow() - timedelta(days=1)
         self.next_band_date = self.refresh_date
         self.queues = [[]]
+        self.db = db
         self.ready = False
         self.spawns_found = 0
         self.spawns_missed_delay = {}
@@ -690,7 +691,7 @@ class SpeedScan(HexSearch):
 
         # prefetch all scanned locations
         locs = [scan['loc'] for scan in self.scans.values()]
-        scanned_locations = ScannedLocation.get_by_locs(locs)
+        scanned_locations = ScannedLocation.get_by_locs(locs, self.db)
 
         # extract all spawnpoints into a dict with spawnpoint
         # id -> spawnpoint for easy access later
