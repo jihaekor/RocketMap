@@ -851,16 +851,10 @@ class ScannedLocation(BaseModel):
                 'step': scan['step'], 'sp': sp_id}
 
     @classmethod
-    def get_by_locs(cls, locs):
-        lats, lons = [], []
-        for loc in locs:
-            lats.append(loc[0])
-            lons.append(loc[1])
-
+    def get_by_cells(cls, cells):
         query = (cls
                  .select()
-                 .where((ScannedLocation.latitude << lats) &
-                        (ScannedLocation.longitude << lons))
+                 .where(cls.cellid << cells)
                  .dicts())
 
         d = {}
@@ -880,8 +874,7 @@ class ScannedLocation(BaseModel):
     def get_by_loc(cls, loc):
         query = (cls
                  .select()
-                 .where((ScannedLocation.latitude == loc[0]) &
-                        (ScannedLocation.longitude == loc[1]))
+                 .where(cls.cellid == cellid(loc))
                  .dicts())
 
         return query[0] if len(list(query)) else cls.new_loc(loc)
