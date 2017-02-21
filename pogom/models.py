@@ -873,10 +873,9 @@ class ScannedLocation(BaseModel):
     # Return value of a particular scan from loc, or default dict if not found.
     @classmethod
     def get_by_loc(cls, loc):
-        cellid = cellid(loc)
         query = (cls
                  .select()
-                 .where(ScannedLocation.cellid == cellid)
+                 .where(ScannedLocation.cellid == cellid(loc))
                  .dicts())
 
         return query[0] if len(list(query)) else cls.new_loc(loc)
