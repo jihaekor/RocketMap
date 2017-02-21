@@ -851,38 +851,17 @@ class ScannedLocation(BaseModel):
                 'step': scan['step'], 'sp': sp_id}
 
     @classmethod
-    def get_by_locs(cls, locs, db):
+    def get_by_locs(cls, locs):
         lats, lons = [], []
         for loc in locs:
             lats.append(loc[0])
             lons.append(loc[1])
 
-        # Create temp table with lat,long because this is
-        # way faster than using IN for two columns for a lot of parameters
-        db.execute_sql('CREATE TEMPORARY TABLE `t_scannedlocation` ('
-                       'latitude double NOT NULL,'
-                       'longitude double NOT NULL,'
-                       'PRIMARY KEY(latitude, longitude)'
-                       ') ENGINE=MEMORY;')
-
-        with db.atomic():
-            for lat, lon in zip(lats, lons):
-                db.execute_sql('INSERT INTO `t_scannedlocation` '
-                               '(`latitude`, `longitude`) VALUES '
-                               '(%s, %s);' % (lat, lon))
-
-        # join scannedlocation with created temp table to filter locations
-        query = (cls.raw('SELECT `t1`.`cellid`, `t1`.`latitude`,'
-                         '`t1`.`longitude`, `t1`.`last_modified`,'
-                         '`t1`.`done`, `t1`.`band1`, `t1`.`band2`,'
-                         '`t1`.`band3`, `t1`.`band4`, `t1`.`band5`,'
-                         '`t1`.`midpoint`, `t1`.`width` '
-                         'FROM `scannedlocation` AS t1 '
-                         'JOIN t_scannedlocation '
-                         'USING (latitude,longitude);').dicts())
-
-        # Delete temp table
-        #db.execute_sql('DROP TABLE `t_scannedlocation`;')
+        query = (cls
+                 .select()
+                 .where((ScannedLocation.latitude << lats) &
+                        (ScannedLocation.longitude << lons))
+                 .dicts())
 
         d = {}
         for sl in list(query):
