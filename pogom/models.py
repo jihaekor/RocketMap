@@ -881,8 +881,8 @@ class ScannedLocation(BaseModel):
                          'JOIN t_scannedlocation '
                          'USING (latitude,longitude);').dicts())
 
-        # Delete temp table
-        #db.execute_sql('DROP TABLE `t_scannedlocation`;')
+        # TODO: Delete temp table
+        # db.execute_sql('DROP TABLE `t_scannedlocation`;')
 
         d = {}
         for sl in list(query):
