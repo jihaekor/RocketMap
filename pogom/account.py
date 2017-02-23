@@ -4,9 +4,9 @@
 import logging
 import time
 import random
+import math
 
 from pgoapi.exceptions import AuthException
-from .utils import .in_radius
 
 log = logging.getLogger(__name__)
 
@@ -263,3 +263,19 @@ def spin_pokestop(api, account, fort, step_location):
                 log.warning('Failed to spin a Pokestop for unknown reason.')
 
     return False
+
+
+# Return equirectangular approximation distance in km.
+def equi_rect_distance(loc1, loc2):
+    R = 6371  # Radius of the earth in km.
+    lat1 = math.radians(loc1[0])
+    lat2 = math.radians(loc2[0])
+    x = (math.radians(loc2[1]) - math.radians(loc1[1])
+         ) * math.cos(0.5 * (lat2 + lat1))
+    y = lat2 - lat1
+    return R * math.sqrt(x * x + y * y)
+
+
+# Return True if distance between two locs is less than distance in km.
+def in_radius(loc1, loc2, distance):
+    return equi_rect_distance(loc1, loc2) < distance
