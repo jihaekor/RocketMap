@@ -1917,8 +1917,76 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                     (f['last_modified'] -
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
 
+        if args.complete_tutorial:
+            player_level = 0
+            pokestop_spinning = False
+            inventory_items = map_dict['responses'].get(
+                'GET_INVENTORY', {}).get(
+                'inventory_delta', {}).get(
+                'inventory_items', [])
+            player_stats = [item['inventory_item_data']['player_stats']
+            for item in inventory_items
+                if 'player_stats' in item.get(
+                        'inventory_item_data', {})]
+                if len(player_stats) > 0:
+                player_level = player_stats[0].get('level', 1)
+                if player_level < 2:
+                    pokestop_spinning = True
+                    log.info('Pokestop-Spinning - Account is level %d. Continuing ...', player_level)
+                else:
+                    log.info('Pokestop-Spinning - Not needed. Account is already level %d.', player_level)
+
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
+                if args.complete_tutorial and pokestop_spinning:
+                    distance = 0.04
+                    if in_radius((f['latitude'], f['longitude']), step_location, distance):
+                        spin_try = 0
+                        spin_result = None
+                        req = api.create_request()
+                        log.warning('Pokestop ID: %s', f['id'])
+                        while (spin_result is None) and spin_try < 3:
+                            spin_response = req.fort_search(fort_id=f['id'],
+                                                            fort_latitude=f['latitude'],
+                                                            fort_longitude=f['longitude'],
+                                                            player_latitude=step_location[0],
+                                                            player_longitude=step_location[1]
+                                                            )
+                            spin_response = req.check_challenge()
+                            spin_response = req.get_hatched_eggs()
+                            spin_response = req.get_inventory()
+                            spin_response = req.check_awarded_badges()
+                            spin_response = req.download_settings()
+                            spin_response = req.get_buddy_walked()
+                            time.sleep(10)
+                            spin_response = req.call()
+                            # Check for reCaptcha
+                            captcha_url = spin_response['responses']['CHECK_CHALLENGE']['challenge_url']
+                            if len(captcha_url) > 1:
+                                log.info('Account encountered a reCaptcha')
+                                return
+
+                            if spin_response['responses']['FORT_SEARCH']['result'] is 1:
+                                spin_result = 'Succeeded'
+                                log.info('Pokestop-Spinning - Spinning attempt succeeded')
+                                pokestop_spinning = False
+                            elif spin_response['responses']['FORT_SEARCH']['result'] is 2:
+                                spin_result = 'Failed'
+                                log.info('Pokestop-Spinning - Pokestop already spun')
+                            elif spin_response['responses']['FORT_SEARCH']['result'] is 3:
+                                spin_result = 'Failed'
+                                log.info('Pokestop-Spinning - Inventory full')
+                            elif spin_response['responses']['FORT_SEARCH']['result'] is 4:
+                                spin_result = 'Failed'
+                                log.info('Pokestop-Spinning - Pokestop not spinable (maybe maximum number already spun)')
+                            elif spin_response['responses']['FORT_SEARCH']['result'] is 5:
+                                spin_result = 'Failed'
+                                log.info('Pokestop-Spinning - Maximum spun stops for the day - idk how you managed this either')
+                            else:
+                                spin_result = 'Failed'
+                                log.info('Pokestop-Spinning - No result, aborted')
+
+
                 if 'active_fort_modifier' in f:
                     lure_expiration = (datetime.utcfromtimestamp(
                         f['last_modified_timestamp_ms'] / 1000.0) +
