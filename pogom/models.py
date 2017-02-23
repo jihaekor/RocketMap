@@ -1927,8 +1927,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
             player_stats = [item['inventory_item_data']['player_stats']
                             for item in inventory_items
                             if 'player_stats' in item.get(
-                'inventory_item_data', {})]
-                if len(player_stats) > 0:
+                            'inventory_item_data', {})]
+            if len(player_stats) > 0:
                 player_level = player_stats[0].get('level', 1)
                 if player_level < 2:
                     pokestop_spinning = True
@@ -1939,13 +1939,16 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                     log.debug(
                         'Pokestop-Spinning - Not needed. ' +
                         'Account is already level %d.', player_level)
+            else:
+                log.warning('Pokestop-Spinning - ' +
+                    'Account level could not be determined')
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
                 if args.complete_tutorial and pokestop_spinning:
                     distance = 0.04
                     if in_radius((f['latitude'], f['longitude']),
-                            step_location, distance):
+                                step_location, distance):
                         spin_try = 0
                         spin_result = None
                         req = api.create_request()
@@ -1982,24 +1985,24 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                                     'Pokestop-Spinning - ' +
                                     'Spinning attempt succeeded')
                                 pokestop_spinning = False
-                            elif spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 2:
+                            elif (spin_response['responses']
+                                    ['FORT_SEARCH']['result'] is 2):
                                 spin_result = 'Failed'
                                 log.debug('Pokestop-Spinning - ' +
                                     'Pokestop out of range')
-                            elif spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 3:
+                            elif (spin_response['responses']
+                                    ['FORT_SEARCH']['result'] is 3):
                                 spin_result = 'Failed'
                                 log.debug('Pokestop-Spinning - ' +
                                     'Pokestop already spun')
-                            elif spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 4:
+                            elif (spin_response['responses']
+                                    ['FORT_SEARCH']['result'] is 4):
                                 spin_result = 'Failed'
                                 log.debug(
                                     'Pokestop-Spinning - ' +
                                     'Inventory is full')
-                            elif spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 5:
+                            elif (spin_response['responses']
+                                    ['FORT_SEARCH']['result'] is 5):
                                 spin_result = 'Failed'
                                 log.debug(
                                     'Pokestop-Spinning - ' +
