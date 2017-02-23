@@ -6,6 +6,7 @@ import time
 import random
 
 from pgoapi.exceptions import AuthException
+from .utils import .in_radius
 
 log = logging.getLogger(__name__)
 
@@ -201,23 +202,20 @@ def complete_tutorial(api, account, tutorial_state):
     time.sleep(random.uniform(2, 4))
     return True
 
-# Spinning a Pokestop to level account up to level 2.
-# API argument needs to be a logged in API instance.
-
 
 def spin_pokestop(api, account, fort, step_location):
     spinning_radius = 0.04
-    if in_radius((f['latitude'], f['longitude']), step_location,
+    if in_radius((fort['latitude'], fort['longitude']), step_location,
                  spinning_radius):
         spin_try = 0
         spin_result = None
         req = api.create_request()
-        log.debug('Pokestop ID: %s', f['id'])
+        log.debug('Pokestop ID: %s', fort['id'])
         while (spin_result is None) and spin_try < 3:
             spin_response = req.fort_search(
-                fort_id=f['id'],
-                fort_latitude=f['latitude'],
-                fort_longitude=f['longitude'],
+                fort_id=fort['id'],
+                fort_latitude=fort['latitude'],
+                fort_longitude=fort['longitude'],
                 player_latitude=step_location[
                     0],
                 player_longitude=step_location[

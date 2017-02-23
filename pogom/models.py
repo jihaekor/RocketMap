@@ -1919,7 +1919,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
 
         # Check level as part of account tutorial completion
-        # if it is needed to spin a Pokestop for level 2
         if args.complete_tutorial:
             player_level = 0
             pokestop_spinning = False
@@ -1927,10 +1926,19 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 'GET_INVENTORY', {}).get(
                 'inventory_delta', {}).get(
                 'inventory_items', [])
-            player_stats = [item['inventory_item_data']['player_stats']
-                            for item in inventory_items
-                            if 'player_stats' in item.get(
-                            'inventory_item_data', {})]
+            try:
+                player_stats = [item['inventory_item_data']['player_stats']
+                                for item in inventory_items
+                                if 'player_stats' in item.get(
+                                'inventory_item_data', {})]
+            except Exception as e:
+                log.error(
+                    'Exception in parse_map retrieving ' +
+                    'player_stats under account %s. ' +
+                    'Exception message: %s',
+                    account['username'], repr(e))
+                traceback.print_exc(file=sys.stdout)
+
             if len(player_stats) > 0:
                 player_level = player_stats[0].get('level', 1)
                 if player_level < 2:
@@ -1943,29 +1951,20 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                         'No need to spin a Pokestop. ' +
                         'Account %s is already level %d.',
                         account['username'], player_level)
-            else:
-                except Exception as e:
-                    log.error(
-                        'Exception in parse_map retrieving ' +
-                        'player_stats under account %s. ' +
-                        'Exception message: %s',
-                        account['username'], repr(e)))
-                    traceback.print_exc(file = sys.stdout)
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
                 # Spinning Pokestop as a part of account tutorial completion
                 if args.complete_tutorial and pokestop_spinning:
-                    # spin_pokestop returns True if succeeded
-                    # pokestop_spinning should then be set to False
-                    pokestop_spinning=not spin_pokestop(
+                    # Set to False when True is returned
+                    pokestop_spinning = not spin_pokestop(
                         api, account, f, step_location)
 
                 if 'active_fort_modifier' in f:
-                    lure_expiration=(datetime.utcfromtimestamp(
+                    lure_expiration = (datetime.utcfromtimestamp(
                         f['last_modified_timestamp_ms'] / 1000.0) +
                         timedelta(minutes=args.lure_duration))
-                    active_fort_modifier=f['active_fort_modifier']
+                    active_fort_modifier = f['active_fort_modifier']
                     if args.webhooks and args.webhook_updates_only:
                         wh_update_queue.put(('pokestop', {
                             'pokestop_id': b64encode(str(f['id'])),
@@ -1979,17 +1978,17 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                             'active_fort_modifier': active_fort_modifier
                         }))
                 else:
-                    lure_expiration, active_fort_modifier=None, None
+                    lure_expiration, active_fort_modifier = None, None
 
                 # Send all pokestops to webhooks.
                 if args.webhooks and not args.webhook_updates_only:
                     # Explicitly set 'webhook_data', in case we want to change
                     # the information pushed to webhooks.  Similar to above and
                     # previous commits.
-                    l_e=None
+                    l_e = None
 
                     if lure_expiration is not None:
-                        l_e=calendar.timegm(lure_expiration.timetuple())
+                        l_e = calendar.timegm(lure_expiration.timetuple())
 
                     wh_update_queue.put(('pokestop', {
                         'pokestop_id': b64encode(str(f['id'])),
@@ -2008,7 +2007,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                     stopsskipped += 1
                     continue
 
-                pokestops[f['id']]={
+                pokestops[f['id']] = {
                     'pokestop_id': f['id'],
                     'enabled': f['enabled'],
                     'latitude': f['latitude'],
