@@ -1940,15 +1940,16 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                         'Pokestop-Spinning - Not needed. ' +
                         'Account is already level %d.', player_level)
             else:
-                log.warning('Pokestop-Spinning - ' +
-                    'Account level could not be determined')
+                log.warning(
+                        'Pokestop-Spinning - ' +
+                        'Account level could not be determined')
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
                 if args.complete_tutorial and pokestop_spinning:
                     distance = 0.04
                     if in_radius((f['latitude'], f['longitude']),
-                                step_location, distance):
+                                    step_location, distance):
                         spin_try = 0
                         spin_result = None
                         req = api.create_request()
@@ -1988,12 +1989,14 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                             elif (spin_response['responses']
                                     ['FORT_SEARCH']['result'] is 2):
                                 spin_result = 'Failed'
-                                log.debug('Pokestop-Spinning - ' +
+                                log.debug(
+                                    'Pokestop-Spinning - ' +
                                     'Pokestop out of range')
                             elif (spin_response['responses']
                                     ['FORT_SEARCH']['result'] is 3):
                                 spin_result = 'Failed'
-                                log.debug('Pokestop-Spinning - ' +
+                                log.debug(
+                                    'Pokestop-Spinning - ' +
                                     'Pokestop already spun')
                             elif (spin_response['responses']
                                     ['FORT_SEARCH']['result'] is 4):
@@ -2010,7 +2013,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                                     '(maybe maximum number already spun)')
                             else:
                                 spin_result = 'Failed'
-                                log.debug(
+                                log.warning(
                                     'Pokestop-Spinning - No result, aborted')
 
                 if 'active_fort_modifier' in f:
