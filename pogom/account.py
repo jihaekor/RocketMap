@@ -212,6 +212,7 @@ def spin_pokestop(api, account, fort, step_location):
         req = api.create_request()
         log.debug('Pokestop ID: %s', fort['id'])
         while (spin_result is None) and spin_try < 3:
+            time.sleep(random.uniform(0.8, 1.8))  # Do not let Niantic throttle
             spin_response = req.fort_search(
                 fort_id=fort['id'],
                 fort_latitude=fort['latitude'],
@@ -228,9 +229,7 @@ def spin_pokestop(api, account, fort, step_location):
             spin_response = req.download_settings()
             spin_response = req.get_buddy_walked()
             spin_response = req.call()
-
-            # Sleep shortly before another call to avoid throttling by Niantic.
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(2, 4))
 
             # Check for reCaptcha
             captcha_url = spin_response['responses'][
