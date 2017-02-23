@@ -31,6 +31,7 @@ from .utils import get_pokemon_name, get_pokemon_rarity, get_pokemon_types, \
     get_move_name, get_move_damage, get_move_energy, get_move_type
 from .transform import transform_from_wgs_to_gcj, get_new_coords
 from .customLog import printPokemon
+from .account import spin_pokestop
 log = logging.getLogger(__name__)
 
 args = get_args()
@@ -1682,7 +1683,7 @@ def hex_bounds(center, steps=None, radius=None):
 
 # todo: this probably shouldn't _really_ be in "models" anymore, but w/e.
 def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
-              api, now_date):
+              api, now_date, account):
     pokemon = {}
     pokestops = {}
     gyms = {}
@@ -1917,6 +1918,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                     (f['last_modified'] -
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
 
+        # Check level as part of account tutorial completion
+        # if it is needed to spin a Pokestop for level 2 
         if args.complete_tutorial:
             player_level = 0
             pokestop_spinning = False
@@ -1933,90 +1936,29 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 if player_level < 2:
                     pokestop_spinning = True
                     log.debug(
-                        'Pokestop-Spinning - Account is level %d. ' +
-                        'Continuing ...', player_level)
+                        'Spinning Pokestop for account %s (level %d).',
+                        account['username'], player_level)
                 else:
                     log.debug(
-                        'Pokestop-Spinning - Not needed. ' +
-                        'Account is already level %d.', player_level)
+                        'No need to spin a Pokestop. ' +
+                        'Account %s is already level %d.',
+                        account['username'], player_level)
             else:
-                log.warning(
-                        'Pokestop-Spinning - ' +
-                        'Account level could not be determined')
+                except Exception as e:
+                    log.error('Exception in parse_map retrieving ' +
+                        'player_stats under account %s. '
+                        'Exception message: %s',
+                        account['username'], repr(e)))
+                    traceback.print_exc(file=sys.stdout)
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
+                # Spinning Pokestop as a part of account tutorial completion
                 if args.complete_tutorial and pokestop_spinning:
-                    distance = 0.04
-                    if in_radius(
-                                (f['latitude'], f['longitude']),
-                                step_location,
-                                distance):
-                        spin_try = 0
-                        spin_result = None
-                        req = api.create_request()
-                        log.warning('Pokestop ID: %s', f['id'])
-                        while (spin_result is None) and spin_try < 3:
-                            spin_response = req.fort_search(
-                                                fort_id=f['id'],
-                                                fort_latitude=f['latitude'],
-                                                fort_longitude=f['longitude'],
-                                                player_latitude=step_location[
-                                                    0],
-                                                player_longitude=step_location[
-                                                    1]
-                                                )
-                            spin_response = req.check_challenge()
-                            spin_response = req.get_hatched_eggs()
-                            spin_response = req.get_inventory()
-                            spin_response = req.check_awarded_badges()
-                            spin_response = req.download_settings()
-                            spin_response = req.get_buddy_walked()
-                            time.sleep(10)
-                            spin_response = req.call()
-                            # Check for reCaptcha
-                            captcha_url = spin_response['responses'][
-                                'CHECK_CHALLENGE']['challenge_url']
-                            if len(captcha_url) > 1:
-                                log.debug('Account encountered a reCaptcha')
-                                return
-
-                            if (spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 1):
-                                spin_result = 'Succeeded'
-                                log.debug(
-                                    'Pokestop-Spinning - ' +
-                                    'Spinning attempt succeeded')
-                                pokestop_spinning = False
-                            elif (spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 2):
-                                spin_result = 'Failed'
-                                log.debug(
-                                    'Pokestop-Spinning - ' +
-                                    'Pokestop out of range')
-                            elif (spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 3):
-                                spin_result = 'Failed'
-                                log.debug(
-                                    'Pokestop-Spinning - ' +
-                                    'Pokestop already spun')
-                            elif (spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 4):
-                                spin_result = 'Failed'
-                                log.debug(
-                                    'Pokestop-Spinning - ' +
-                                    'Inventory is full')
-                            elif (spin_response['responses']
-                                    ['FORT_SEARCH']['result'] is 5):
-                                spin_result = 'Failed'
-                                log.debug(
-                                    'Pokestop-Spinning - ' +
-                                    'Pokestop not spinable' +
-                                    '(maybe maximum number already spun)')
-                            else:
-                                spin_result = 'Failed'
-                                log.warning(
-                                    'Pokestop-Spinning - No result, aborted')
+                    # spin_pokestop returns True if succeeded
+                    # pokestop_spinning should then be set to False
+                    pokestop_spinning = not spin_pokestop(api, account, f,
+                        step_location)
 
                 if 'active_fort_modifier' in f:
                     lure_expiration = (datetime.utcfromtimestamp(
