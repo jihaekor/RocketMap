@@ -1948,8 +1948,10 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
                 if args.complete_tutorial and pokestop_spinning:
                     distance = 0.04
-                    if in_radius((f['latitude'], f['longitude']),
-                                    step_location, distance):
+                    if in_radius(
+                                (f['latitude'], f['longitude']),
+                                step_location,
+                                distance):
                         spin_try = 0
                         spin_result = None
                         req = api.create_request()
