@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import sys
 import time
 import random
-import math
+import traceback
 
 from pgoapi.exceptions import AuthException
+
+from .utils import in_radius
 
 log = logging.getLogger(__name__)
 
@@ -203,6 +206,32 @@ def complete_tutorial(api, account, tutorial_state):
     return True
 
 
+def get_player_level(map_dict, account):
+    inventory_items = map_dict['responses'].get(
+        'GET_INVENTORY', {}).get(
+        'inventory_delta', {}).get(
+        'inventory_items', [])
+    try:
+        player_stats = [item['inventory_item_data']['player_stats']
+                        for item in inventory_items
+                        if 'player_stats' in item.get(
+                        'inventory_item_data', {})]
+    except Exception as e:
+        log.error(
+            'Exception in parse_map retrieving ' +
+            'player_stats under account %s. ' +
+            'Exception message: %s',
+            account['username'], repr(e))
+        traceback.print_exc(file=sys.stdout)
+
+    if len(player_stats) > 0:
+        player_level = player_stats[0].get('level', 1)
+        log.debug('Account %s is level %d.', account['username'], player_level)
+        return player_level
+
+    return 0
+
+
 def spin_pokestop(api, account, fort, step_location):
     spinning_radius = 0.04
     if in_radius((fort['latitude'], fort['longitude']), step_location,
@@ -262,19 +291,3 @@ def spin_pokestop(api, account, fort, step_location):
                 log.warning('Failed to spin a Pokestop for unknown reason.')
 
     return False
-
-
-# Return equirectangular approximation distance in km.
-def equi_rect_distance(loc1, loc2):
-    R = 6371  # Radius of the earth in km.
-    lat1 = math.radians(loc1[0])
-    lat2 = math.radians(loc2[0])
-    x = (math.radians(loc2[1]) - math.radians(loc1[1])
-         ) * math.cos(0.5 * (lat2 + lat1))
-    y = lat2 - lat1
-    return R * math.sqrt(x * x + y * y)
-
-
-# Return True if distance between two locs is less than distance in km.
-def in_radius(loc1, loc2, distance):
-    return equi_rect_distance(loc1, loc2) < distance

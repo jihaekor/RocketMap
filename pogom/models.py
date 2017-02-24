@@ -31,7 +31,7 @@ from .utils import get_pokemon_name, get_pokemon_rarity, get_pokemon_types, \
     get_move_name, get_move_damage, get_move_energy, get_move_type
 from .transform import transform_from_wgs_to_gcj, get_new_coords
 from .customLog import printPokemon
-from .account import spin_pokestop
+from .account import get_player_level, spin_pokestop
 log = logging.getLogger(__name__)
 
 args = get_args()
@@ -1920,37 +1920,17 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
 
         # Check level as part of account tutorial completion
         if args.complete_tutorial:
-            player_level = 0
+            player_level = get_player_level(map_dict, account)
             pokestop_spinning = False
-            inventory_items = map_dict['responses'].get(
-                'GET_INVENTORY', {}).get(
-                'inventory_delta', {}).get(
-                'inventory_items', [])
-            try:
-                player_stats = [item['inventory_item_data']['player_stats']
-                                for item in inventory_items
-                                if 'player_stats' in item.get(
-                                'inventory_item_data', {})]
-            except Exception as e:
-                log.error(
-                    'Exception in parse_map retrieving ' +
-                    'player_stats under account %s. ' +
-                    'Exception message: %s',
-                    account['username'], repr(e))
-                traceback.print_exc(file=sys.stdout)
-
-            if len(player_stats) > 0:
-                player_level = player_stats[0].get('level', 1)
-                if player_level < 2:
-                    pokestop_spinning = True
-                    log.debug(
-                        'Spinning Pokestop for account %s (level %d).',
-                        account['username'], player_level)
-                else:
-                    log.debug(
-                        'No need to spin a Pokestop. ' +
-                        'Account %s is already level %d.',
-                        account['username'], player_level)
+            if player_level == 1:
+                pokestop_spinning = True
+                log.debug(
+                    'Spinning Pokestop for account %s.', account['username'])
+            else:
+                log.debug(
+                    'No need to spin a Pokestop. ' +
+                    'Account %s is already level %d.',
+                    account['username'], player_level)
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
