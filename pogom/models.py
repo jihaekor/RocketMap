@@ -1917,6 +1917,10 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 encountered_pokestops = [(f['pokestop_id'], int(
                     (f['last_modified'] -
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
+        elif (not config['parse_pokestops'] and args.complete_tutorial):
+            log.error(
+                'Pokestop can not be spun since parsing Pokestops is not' +
+                'active. You should check if you accidently set \'-nk\' flag.')
 
         # Check level as part of account tutorial completion
         if args.complete_tutorial:
