@@ -28,4 +28,4 @@ have 10 accounts running at the same time.
 * If you are not using fresh accounts and you are not running hash service,
 prepare for occuring captchas. Set up your RocketMap accordingly.
 * Enable ``-v`` in process if you want to see it working in log.
-* Let it run and your accounts will complete the tutorial and rise to Level 2.
+* Let it run and your accounts will complete the tutorial and rise to level 2.
