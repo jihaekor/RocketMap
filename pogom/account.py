@@ -239,7 +239,7 @@ def spin_pokestop(api, fort, step_location):
             captcha_url = spin_response['responses'][
                 'CHECK_CHALLENGE']['challenge_url']
             if len(captcha_url) > 1:
-                log.debug('Worker encountered a reCaptcha.')
+                log.debug('Account encountered a reCaptcha.')
                 return False
 
             spin_result = spin_response['responses']['FORT_SEARCH']['result']
