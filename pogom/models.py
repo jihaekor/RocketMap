@@ -1924,7 +1924,9 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
 
         # Check level as part of account tutorial completion
         if args.complete_tutorial:
-            player_level = get_player_level(map_dict, account)
+            player_level = get_player_level(map_dict)
+            log.debug(
+                'Account %s is level %d.', account['username'], player_level)
             pokestop_spinning = False
             if player_level == 1:
                 pokestop_spinning = True
@@ -1942,7 +1944,11 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 if args.complete_tutorial and pokestop_spinning:
                     # Set to False when True is returned
                     pokestop_spinning = not spin_pokestop(
-                        api, account, f, step_location)
+                        api, f, step_location)
+                    if not pokestop_spinning:
+                        log.debug(
+                            'Account %s successfully spun a Pokestop' +
+                            'and after completed tutorial.')
 
                 if 'active_fort_modifier' in f:
                     lure_expiration = (datetime.utcfromtimestamp(

@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import sys
 import time
 import random
-import traceback
 
 from pgoapi.exceptions import AuthException
 
@@ -206,88 +204,82 @@ def complete_tutorial(api, account, tutorial_state):
     return True
 
 
-def get_player_level(map_dict, account):
+def get_player_level(map_dict):
     inventory_items = map_dict['responses'].get(
         'GET_INVENTORY', {}).get(
         'inventory_delta', {}).get(
         'inventory_items', [])
-    try:
-        player_stats = [item['inventory_item_data']['player_stats']
-                        for item in inventory_items
-                        if 'player_stats' in item.get(
-                        'inventory_item_data', {})]
-    except Exception as e:
-        log.error(
-            'Exception in parse_map retrieving ' +
-            'player_stats under account %s. ' +
-            'Exception message: %s',
-            account['username'], repr(e))
-        traceback.print_exc(file=sys.stdout)
-
+    player_stats = [item['inventory_item_data']['player_stats']
+                    for item in inventory_items
+                    if 'player_stats' in item.get(
+                    'inventory_item_data', {})]
     if len(player_stats) > 0:
         player_level = player_stats[0].get('level', 1)
-        log.debug('Account %s is level %d.', account['username'], player_level)
         return player_level
 
     return 0
 
 
-def spin_pokestop(api, account, fort, step_location):
+def spin_pokestop(api, fort, step_location):
     spinning_radius = 0.04
     if in_radius((fort['latitude'], fort['longitude']), step_location,
                  spinning_radius):
+        log.debug('Attempt to spin Pokestop (ID %s)', fort['id'])
         spin_try = 0
-        spin_result = None
-        req = api.create_request()
-        log.debug('Pokestop ID: %s', fort['id'])
-        while (spin_result is None) and spin_try < 3:
+        while spin_try < 3:
+            spin_try += 1
             time.sleep(random.uniform(0.8, 1.8))  # Do not let Niantic throttle
-            spin_response = req.fort_search(
-                fort_id=fort['id'],
-                fort_latitude=fort['latitude'],
-                fort_longitude=fort['longitude'],
-                player_latitude=step_location[
-                    0],
-                player_longitude=step_location[
-                    1]
-            )
-            spin_response = req.check_challenge()
-            spin_response = req.get_hatched_eggs()
-            spin_response = req.get_inventory()
-            spin_response = req.check_awarded_badges()
-            spin_response = req.download_settings()
-            spin_response = req.get_buddy_walked()
-            spin_response = req.call()
-            time.sleep(random.uniform(2, 4))
+            spin_response = spin_pokestop_request(
+                    api, fort['id'],
+                    fort['latitude'], fort['longitude'],
+                    step_location[0], step_location[1])
+            time.sleep(random.uniform(2, 4))  # Do not let Niantic throttle
 
             # Check for reCaptcha
             captcha_url = spin_response['responses'][
                 'CHECK_CHALLENGE']['challenge_url']
-
             if len(captcha_url) > 1:
-                log.debug('Account encountered a reCaptcha.')
+                log.debug('Worker encountered a reCaptcha.')
                 return False
 
-            if (spin_response['responses']['FORT_SEARCH']['result'] is 1):
-                spin_result = 'Succeeded'
-                log.debug('Account successfully spinned Pokestop.')
+            spin_result = spin_response['responses']['FORT_SEARCH']['result']
+            if spin_result is 1:
+                log.debug('Successful Pokestop spin.')
                 return True
-            elif (spin_response['responses']['FORT_SEARCH']['result'] is 2):
-                spin_result = 'Failed'
+            elif spin_result is 2:
                 log.debug('Pokestop was not in range to spin.')
-            elif (spin_response['responses']['FORT_SEARCH']['result'] is 3):
-                spin_result = 'Failed'
+            elif spin_result is 3:
                 log.debug('Pokestop has already been recently spun.')
-            elif (spin_response['responses']['FORT_SEARCH']['result'] is 4):
-                spin_result = 'Failed'
+            elif spin_result is 4:
                 log.debug('Failed to spin Pokestop. Inventory is full.')
-            elif (spin_response['responses']['FORT_SEARCH']['result'] is 5):
-                spin_result = 'Failed'
+            elif spin_result is 5:
                 log.debug(
                     'Pokestop is not spinable. ' +
                     'Already spun maximum number for this day, bot?')
             else:
-                spin_result = 'Failed'
-                log.warning('Failed to spin a Pokestop for unknown reason.')
+                log.warning(
+                    'Failed to spin a Pokestop. Unknown result %d.',
+                    spin_result)
 
     return False
+
+
+def spin_pokestop_request(
+        api, fort_id, fort_latitude, fort_longitude,
+        player_latitude, player_longitude):
+    req = api.create_request()
+    spin_pokestop_response = req.fort_search(
+        fort_id,
+        fort_latitude,
+        fort_longitude,
+        player_latitude,
+        player_longitude)
+    spin_pokestop_response = req.check_challenge()
+    spin_pokestop_response = req.get_hatched_eggs()
+    spin_pokestop_response = req.get_inventory()
+    spin_pokestop_response = req.check_awarded_badges()
+    spin_pokestop_response = req.download_settings()
+    spin_pokestop_response = req.get_buddy_walked()
+    spin_pokestop_response = req.call()
+
+    return spin_pokestop_response
