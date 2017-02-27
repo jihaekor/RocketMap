@@ -229,10 +229,7 @@ def spin_pokestop(api, fort, step_location):
         while spin_try < 3:
             spin_try += 1
             time.sleep(random.uniform(0.8, 1.8))  # Do not let Niantic throttle
-            spin_response = spin_pokestop_request(
-                    api, fort['id'],
-                    fort['latitude'], fort['longitude'],
-                    step_location[0], step_location[1])
+            spin_response = spin_pokestop_request(api, fort, step_location)
             time.sleep(random.uniform(2, 4))  # Do not let Niantic throttle
 
             # Check for reCaptcha
@@ -264,22 +261,25 @@ def spin_pokestop(api, fort, step_location):
     return False
 
 
-def spin_pokestop_request(
-        api, fort_id, fort_latitude, fort_longitude,
-        player_latitude, player_longitude):
-    req = api.create_request()
-    spin_pokestop_response = req.fort_search(
-        fort_id,
-        fort_latitude,
-        fort_longitude,
-        player_latitude,
-        player_longitude)
-    spin_pokestop_response = req.check_challenge()
-    spin_pokestop_response = req.get_hatched_eggs()
-    spin_pokestop_response = req.get_inventory()
-    spin_pokestop_response = req.check_awarded_badges()
-    spin_pokestop_response = req.download_settings()
-    spin_pokestop_response = req.get_buddy_walked()
-    spin_pokestop_response = req.call()
+def spin_pokestop_request(api, fort, step_location):
+    try:
+        req = api.create_request()
+        spin_pokestop_response = req.fort_search(
+            fort_id=fort['id'],
+            fort_latitude=fort['latitude'],
+            fort_longitude=fort['longitude'],
+            player_latitude=step_location[0],
+            player_longitude=step_location[1])
+        spin_pokestop_response = req.check_challenge()
+        spin_pokestop_response = req.get_hatched_eggs()
+        spin_pokestop_response = req.get_inventory()
+        spin_pokestop_response = req.check_awarded_badges()
+        spin_pokestop_response = req.download_settings()
+        spin_pokestop_response = req.get_buddy_walked()
+        spin_pokestop_response = req.call()
 
-    return spin_pokestop_response
+        return spin_pokestop_response
+
+    except Exception as e:
+        log.warning('Exception while spinning Pokestop: %s', repr(e))
+        return False
