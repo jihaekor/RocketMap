@@ -8,12 +8,8 @@ Pokestop due to the "First Pokestop of the Day" bonus.
 * We assume you are running a basic RocketMap installation. It is best to run
 the tutorial with hashing service on newest API to not get your fresh accounts
 becoming flagged.
-* Set up an instance with the following flags
-	* ``--complete-tutorial`` or just ``-tut``
-	* ``--config config/config.tutorial.ini`` or just
-	``-cf config/config.tutorial.ini`` to use a designated config file.
-	* ``accountcsv: PATH/accounts.csv`` or just ``-ac PATH/accounts.csv``
-* Create the ``config/config.tutorial.ini`` file by copying and renaming the
+
+* Create a ``config/config.tutorial.ini`` file by copying and renaming the
 ``config/config.ini.example`` and make some changes to it afterwards which let
 the tutorial run smooth and fast enough to go through a batch of accounts.
 * Config changes are:
@@ -27,9 +23,14 @@ the tutorial run smooth and fast enough to go through a batch of accounts.
 	* Set login delay at least to ``login_delay: 1`` to avoid throttling.
 * Put your accounts, which need to run the tutorial and need to level up, into
 your ``accounts.csv`` file.
-* Set your simultaneously working accounts, with ``-w`` as process flag, to a
-reasonable number, considering hash key limit and throttling. You can at least
-have 10 accounts running at the same time.
+* Set up an instance with the following flags
+	* ``--complete-tutorial`` or just ``-tut``
+	* ``--config config/config.tutorial.ini`` or just
+	``-cf config/config.tutorial.ini`` to use a designated config file.
+	* ``--accountcsv PATH/accounts.csv`` or just ``-ac PATH/accounts.csv``
+	* ``-w WORKER`` to set your simultaneously working accounts to a reasonable
+	number, considering hash key limit and throttling. You can at least have 10
+	accounts running at the same time without any problems.
 * If you are not using fresh accounts and you are not running hash service,
 prepare for occuring captchas. Set up your RocketMap accordingly.
 * Enable ``-v`` in process if you want to see it working in log.
