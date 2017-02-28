@@ -204,6 +204,32 @@ def complete_tutorial(api, account, tutorial_state):
     return True
 
 
+# Complete tutorial with a level up by a Pokestop spin.
+# API argument needs to be a logged in API instance.
+# Called during fort parsing in models.py
+def tutorial_pokestop_spin(api, map_dict, forts, step_location, account):
+    player_level = get_player_level(map_dict)
+    if player_level > 1:
+        log.debug(
+            'No need to spin a Pokestop. ' +
+            'Account %s is already level %d.',
+            account['username'], player_level)
+    else:  # Account needs to spin a Pokestop for level 2.
+        for fort in forts:
+            if fort.get('type') == 1:
+                log.debug(
+                    'Spinning Pokestop for account %s.',
+                    account['username'])
+                if spin_pokestop(api, fort, step_location):
+                    log.debug(
+                        'Account %s successfully spun a Pokestop' +
+                        'after completed tutorial.',
+                        account['username'])
+                    return True
+
+    return False
+
+
 def get_player_level(map_dict):
     inventory_items = map_dict['responses'].get(
         'GET_INVENTORY', {}).get(

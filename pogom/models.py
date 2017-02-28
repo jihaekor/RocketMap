@@ -31,7 +31,7 @@ from .utils import get_pokemon_name, get_pokemon_rarity, get_pokemon_types, \
     get_move_name, get_move_damage, get_move_energy, get_move_type
 from .transform import transform_from_wgs_to_gcj, get_new_coords
 from .customLog import printPokemon
-from .account import get_player_level, spin_pokestop
+from .account import tutorial_pokestop_spin
 log = logging.getLogger(__name__)
 
 args = get_args()
@@ -1917,33 +1917,18 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 encountered_pokestops = [(f['pokestop_id'], int(
                     (f['last_modified'] -
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
-        elif (not config['parse_pokestops'] and args.complete_tutorial):
-            log.error(
-                'Pokestop can not be spun since parsing Pokestops is not' +
-                'active. You should check if you accidently set \'-nk\' flag.')
 
-        # Check level as part of account tutorial completion
-        if args.complete_tutorial:
-            player_level = get_player_level(map_dict)
-            if player_level > 1:
-                log.debug(
-                    'No need to spin a Pokestop. ' +
-                    'Account %s is already level %d.',
-                    account['username'], player_level)
+        if args.complete_tutorial:  # Complete tutorial with a Pokestop spin
+            if config['parse_pokestops']:
+                tutorial_pokestop_spin(
+                    api, map_dict, forts, step_location, account)
+            else:
+                log.error(
+                    'Pokestop can not be spun since parsing Pokestops is not' +
+                    'active. Check if \'-nk\' flag is accidently set .')
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
-                # Spinning Pokestop as a part of account tutorial completion
-                if args.complete_tutorial and player_level == 1:
-                    log.debug(
-                        'Spinning Pokestop for account %s.',
-                        account['username'])
-                    if spin_pokestop(api, f, step_location):
-                        player_level = 2  # Should be, now, but this can change
-                        log.debug(
-                            'Account %s successfully spun a Pokestop' +
-                            'after completed tutorial.', account['username'])
-
                 if 'active_fort_modifier' in f:
                     lure_expiration = (datetime.utcfromtimestamp(
                         f['last_modified_timestamp_ms'] / 1000.0) +
