@@ -1925,28 +1925,24 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
         # Check level as part of account tutorial completion
         if args.complete_tutorial:
             player_level = get_player_level(map_dict)
-            pokestop_spinning = False
-            if player_level == 1:
-                pokestop_spinning = True
-                log.debug(
-                    'Spinning Pokestop for account %s.', account['username'])
-            else:
-                log.debug(
-                    'No need to spin a Pokestop. ' +
-                    'Account %s is already level %d.',
-                    account['username'], player_level)
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
                 # Spinning Pokestop as a part of account tutorial completion
-                if args.complete_tutorial and pokestop_spinning:
-                    # Set to False when True is returned
-                    pokestop_spinning = not spin_pokestop(
-                        api, f, step_location)
-                    if not pokestop_spinning:
+                if args.complete_tutorial and player_level == 1:
+                    log.debug(
+                        'Spinning Pokestop for account %s.',
+                        account['username'])
+                    if spin_pokestop(api, f, step_location):
+                        player_level = 0  # Should be 2, but this can change
                         log.debug(
                             'Account %s successfully spun a Pokestop' +
-                            'after completed tutorial.')
+                            'after completed tutorial.', account['username'])
+                elif args.complete_tutorial and player_level != 1:
+                    log.debug(
+                        'No need to spin a Pokestop. ' +
+                        'Account %s is already level %d.',
+                        account['username'], player_level)
 
                 if 'active_fort_modifier' in f:
                     lure_expiration = (datetime.utcfromtimestamp(
