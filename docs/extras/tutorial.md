@@ -8,7 +8,6 @@ Pokestop due to the "First Pokestop of the Day" bonus.
 * We assume you are running a basic RocketMap installation. It is best to run
 the tutorial with hashing service on newest API to not get your fresh accounts
 becoming flagged.
-
 * Create a ``config/config.tutorial.ini`` file by copying and renaming the
 ``config/config.ini.example`` and make some changes to it afterwards which let
 the tutorial run smooth and fast enough to go through a batch of accounts.

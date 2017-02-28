@@ -215,11 +215,11 @@ def tutorial_pokestop_spin(api, map_dict, forts, step_location, account):
             'Account %s is already level %d.',
             account['username'], player_level)
     else:  # Account needs to spin a Pokestop for level 2.
+        log.debug(
+            'Spinning Pokestop for account %s.',
+            account['username'])
         for fort in forts:
             if fort.get('type') == 1:
-                log.debug(
-                    'Spinning Pokestop for account %s.',
-                    account['username'])
                 if spin_pokestop(api, fort, step_location):
                     log.debug(
                         'Account %s successfully spun a Pokestop' +
