@@ -1,6 +1,6 @@
 # RocketMap tutorial completion for accounts (up to Level 2)
 
-This is documentation to complete the Pokemon GO Tutorial for a number of
+This is a documentation to complete the Pokemon GO Tutorial for a number of
 accounts while simultaneously become level 2 when completing it next to a
 Pokestop due to the "First Pokestop of the Day" bonus.
 
