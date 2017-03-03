@@ -1698,6 +1698,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
     new_spawn_points = []
     sp_id_list = []
     now_secs = date_secs(now_date)
+    captcha_url = ''
 
     # Consolidate the individual lists in each cell into two lists of Pokemon
     # and a list of forts.
@@ -1862,6 +1863,11 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 encounter_result = req.get_buddy_walked()
                 encounter_result = req.call()
 
+                captcha_url = encounter_result['responses']['CHECK_CHALLENGE'][
+                        'challenge_url']  # Check for captcha
+                if len(captcha_url) > 1:  # Throw warning but finish parsing
+                    log.debug('Account encountered a reCaptcha.')
+
             pokemon[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
                 'spawnpoint_id': p['spawn_point_id'],
@@ -1919,8 +1925,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
 
         # Complete tutorial with a Pokestop spin
-        captcha_url = encounter_result['responses'][
-                'CHECK_CHALLENGE']['challenge_url']  # Just to be sure
         if args.complete_tutorial and not (len(captcha_url) > 1):
             if config['parse_pokestops']:
                 tutorial_pokestop_spin(
