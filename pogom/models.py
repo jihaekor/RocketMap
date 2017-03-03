@@ -1919,7 +1919,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
 
         # Complete tutorial with a Pokestop spin
-        captcha_url = map_dict['responses'][
+        captcha_url = encounter_result['responses'][
                 'CHECK_CHALLENGE']['challenge_url']  # Just to be sure
         if args.complete_tutorial and not (len(captcha_url) > 1):
             if config['parse_pokestops']:
