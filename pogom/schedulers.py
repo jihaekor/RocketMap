@@ -480,8 +480,10 @@ class SpeedScan(HexSearch):
         super(SpeedScan, self).__init__(queues, status, args)
         self.refresh_date = datetime.utcnow() - timedelta(days=1)
         self.next_band_date = self.refresh_date
+        self.location_change_date = datetime.utcnow()
         self.queues = [[]]
         self.ready = False
+        self.empty_hive = False
         self.spawns_found = 0
         self.spawns_missed_delay = {}
         self.scans_done = 0
@@ -512,12 +514,12 @@ class SpeedScan(HexSearch):
     # On location change, empty the current queue and the locations list
     def location_changed(self, scan_location, db_update_queue):
         super(SpeedScan, self).location_changed(scan_location, db_update_queue)
+        self.location_change_date = datetime.utcnow()
         self.locations = self._generate_locations()
         scans = {}
         initial = {}
         all_scans = {}
-        for sl in ScannedLocation.select_in_hex(self.scan_location,
-                                                self.args.step_limit):
+        for sl in ScannedLocation.select_in_hex(self.locations):
             all_scans[cellid((sl['latitude'], sl['longitude']))] = sl
 
         for i, e in enumerate(self.locations):
@@ -533,7 +535,7 @@ class SpeedScan(HexSearch):
         log.info('%d steps created', len(scans))
         self.band_spacing = int(10 * 60 / len(scans))
         self.band_status()
-        spawnpoints = SpawnPoint.select_in_hex(
+        spawnpoints = SpawnPoint.select_in_hex_by_location(
             self.scan_location, self.args.step_limit)
         if not spawnpoints:
             log.info('No spawnpoints in hex found in SpawnPoint table. ' +
@@ -651,7 +653,8 @@ class SpeedScan(HexSearch):
     # the first band of a scan is done
     def time_to_refresh_queue(self):
         return ((datetime.utcnow() - self.refresh_date).total_seconds() >
-                self.minutes * 60 or self.queues == [[]])
+                self.minutes * 60 or
+                (self.queues == [[]] and not self.empty_hive))
 
     # Function to empty all queues in the queues list
     def empty_queues(self):
@@ -702,7 +705,8 @@ class SpeedScan(HexSearch):
         # extract all spawnpoints into a dict with spawnpoint
         # id -> spawnpoint for easy access later
         cell_to_linked_spawn_points = (
-            ScannedLocation.get_cell_to_linked_spawn_points(self.scans.keys()))
+            ScannedLocation.get_cell_to_linked_spawn_points(
+                self.scans.keys(), self.location_change_date))
         sp_by_id = {}
         for sps in cell_to_linked_spawn_points.itervalues():
             for sp in sps:
@@ -722,6 +726,10 @@ class SpeedScan(HexSearch):
         self.ready = True
         log.info('New queue created with %d entries in %f seconds', len(queue),
                  (end - start))
+        # Avoiding refreshing the Queue when the initial scan is complete, and
+        # there are no spawnpoints in the hive.
+        if len(queue) == 0:
+            self.empty_hive = True
         if old_q:
             # Enclosing in try: to avoid divide by zero exceptions from
             # killing overseer
@@ -754,8 +762,8 @@ class SpeedScan(HexSearch):
                 found_percent = 100.0
                 good_percent = 100.0
                 spawns_reached = 100.0
-                spawnpoints = SpawnPoint.select_in_hex(
-                    self.scan_location, self.args.step_limit)
+                spawnpoints = SpawnPoint.select_in_hex_by_cellids(
+                    self.scans.keys(), self.location_change_date)
                 for sp in spawnpoints:
                     if sp['missed_count'] > 5:
                         continue
