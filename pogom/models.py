@@ -32,6 +32,7 @@ from .utils import get_pokemon_name, get_pokemon_rarity, get_pokemon_types, \
     get_move_name, get_move_damage, get_move_energy, get_move_type
 from .transform import transform_from_wgs_to_gcj, get_new_coords
 from .customLog import printPokemon
+from .account import tutorial_pokestop_spin
 log = logging.getLogger(__name__)
 
 args = get_args()
@@ -1748,7 +1749,7 @@ def hex_bounds(center, steps=None, radius=None):
 
 # todo: this probably shouldn't _really_ be in "models" anymore, but w/e.
 def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
-              api, now_date):
+              api, now_date, account):
     pokemon = {}
     pokestops = {}
     gyms = {}
@@ -1762,6 +1763,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
     sightings = {}
     new_spawn_points = []
     sp_id_list = []
+    now_secs = date_secs(now_date)
+    captcha_url = ''
 
     # Consolidate the individual lists in each cell into two lists of Pokemon
     # and a list of forts.
@@ -1931,6 +1934,11 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 encounter_result = req.get_buddy_walked()
                 encounter_result = req.call()
 
+                captcha_url = encounter_result['responses']['CHECK_CHALLENGE'][
+                        'challenge_url']  # Check for captcha
+                if len(captcha_url) > 1:  # Throw warning but finish parsing
+                    log.debug('Account encountered a reCaptcha.')
+
             pokemon[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
                 'spawnpoint_id': p['spawn_point_id'],
@@ -1992,6 +2000,16 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                 encountered_pokestops = [(f['pokestop_id'], int(
                     (f['last_modified'] -
                      datetime(1970, 1, 1)).total_seconds())) for f in query]
+
+        # Complete tutorial with a Pokestop spin
+        if args.complete_tutorial and not (len(captcha_url) > 1):
+            if config['parse_pokestops']:
+                tutorial_pokestop_spin(
+                    api, map_dict, forts, step_location, account)
+            else:
+                log.error(
+                    'Pokestop can not be spun since parsing Pokestops is not' +
+                    'active. Check if \'-nk\' flag is accidently set.')
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
