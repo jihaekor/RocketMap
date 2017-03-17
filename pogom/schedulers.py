@@ -62,7 +62,7 @@ from datetime import datetime, timedelta
 from .transform import get_new_coords
 from .models import (hex_bounds, Pokemon, SpawnPoint, ScannedLocation,
                      ScanSpawnPoint)
-from .utils import now, cur_sec, cellid, date_secs, equi_rect_distance
+from .utils import now, cur_sec, cellid, equi_rect_distance
 from .altitude import get_altitude
 
 log = logging.getLogger(__name__)
@@ -482,6 +482,7 @@ class SpeedScan(HexSearch):
         self.next_band_date = self.refresh_date
         self.location_change_date = datetime.utcnow()
         self.queues = [[]]
+        self.queue_version = 0
         self.ready = False
         self.empty_hive = False
         self.spawns_found = 0
@@ -562,52 +563,27 @@ class SpeedScan(HexSearch):
     # since it didn't recognize the location in the ScannedLocation table
     def _generate_locations(self):
 
-        NORTH = 0
-        EAST = 90
-        SOUTH = 180
-        WEST = 270
-
         # dist between column centers
         xdist = math.sqrt(3) * self.step_distance
-        ydist = 3 * (self.step_distance / 2)       # dist between row centers
 
         results = []
-
         loc = self.scan_location
         results.append((loc[0], loc[1], 0))
-
-        # upper part
+        # This will loop thorugh all the rings in the hex from the centre
+        # moving outwards
         for ring in range(1, self.step_limit):
-
-            for i in range(max(ring - 1, 1)):
-                if ring > 1:
-                    loc = get_new_coords(loc, ydist, NORTH)
-
-                loc = get_new_coords(loc, xdist / (1 + (ring > 1)), WEST)
-                results.append((loc[0], loc[1], 0))
-
-            for i in range(ring):
-                loc = get_new_coords(loc, ydist, NORTH)
-                loc = get_new_coords(loc, xdist / 2, EAST)
-                results.append((loc[0], loc[1], 0))
-
-            for i in range(ring):
-                loc = get_new_coords(loc, xdist, EAST)
-                results.append((loc[0], loc[1], 0))
-
-            for i in range(ring):
-                loc = get_new_coords(loc, ydist, SOUTH)
-                loc = get_new_coords(loc, xdist / 2, EAST)
-                results.append((loc[0], loc[1], 0))
-
-            for i in range(ring):
-                loc = get_new_coords(loc, ydist, SOUTH)
-                loc = get_new_coords(loc, xdist / 2, WEST)
-                results.append((loc[0], loc[1], 0))
-
-            for i in range(ring + (ring + 1 < self.step_limit)):
-                loc = get_new_coords(loc, xdist, WEST)
-                results.append((loc[0], loc[1], 0))
+            for i in range(0, 6):
+                # Star_locs will contain the locations of the 6 vertices of
+                # the current ring (90,150,210,270,330 and 30 degrees from
+                # origin) to form a star
+                star_loc = get_new_coords(self.scan_location, xdist * ring,
+                                          90 + 60*i)
+                for j in range(0, ring):
+                    # Then from each point on the star, create locations
+                    # towards the next point of star along the edge of the
+                    # current ring
+                    loc = get_new_coords(star_loc, xdist * (j), 210 + 60*i)
+                    results.append((loc[0], loc[1], 0))
 
         generated_locations = []
         for step, location in enumerate(results):
@@ -693,6 +669,7 @@ class SpeedScan(HexSearch):
         now_date = datetime.utcnow()
         self.refresh_date = now_date
         self.refresh_ms = now_date.minute * 60 + now_date.second
+        self.queue_version += 1
         old_q = deepcopy(self.queues[0])
         queue = []
 
@@ -932,14 +909,15 @@ class SpeedScan(HexSearch):
                 if now_date < self.next_band_date:
                     continue
 
-                # If the start time isn't yet, don't bother looking further,
-                # since queue sorted by start time.
-                if ms < item['start']:
-                    break
-
+                # If we are going to get there before it starts then ignore
                 loc = item['loc']
                 distance = equi_rect_distance(loc, worker_loc)
                 secs_to_arrival = distance / self.args.kph * 3600
+                secs_waited = (now_date - last_action).total_seconds()
+                secs_to_arrival = (secs_to_arrival - secs_waited) if (
+                    secs_waited < secs_to_arrival) else 0
+                if ms + secs_to_arrival < item['start']:
+                    continue
 
                 # If we can't make it there before it disappears, don't bother
                 # trying.
@@ -958,13 +936,19 @@ class SpeedScan(HexSearch):
                 score = score / (distance + .01)
 
                 if score > best['score']:
-                    best = {'score': score, 'i': i}
+                    best = {'score': score, 'i': i,
+                            'secs_to_arrival': secs_to_arrival}
                     best.update(item)
 
             prefix = 'Calc %.2f for %d scans:' % (time.time() - now_time, n)
             loc = best.get('loc', [])
             step = best.get('step', 0)
+            secs_to_arrival = best.get('secs_to_arrival', 0)
             i = best.get('i', 0)
+            st = best.get('start', 0)
+            end = best.get('end', 0)
+            log.debug('step {} start {} end {} secs to arrival {}'.format(
+                step, st, end, secs_to_arrival))
             messages = {
                 'wait': 'Nothing to scan.',
                 'early': 'Early for step {}; waiting a few seconds...'.format(
@@ -1035,6 +1019,7 @@ class SpeedScan(HexSearch):
             # Mark scanned
             item['done'] = 'Scanned'
             status['index_of_queue_item'] = i
+            status['queue_version'] = self.queue_version
 
             messages['search'] = 'Scanning step {} for a {}.'.format(
                 best['step'], best['kind'])
@@ -1043,16 +1028,21 @@ class SpeedScan(HexSearch):
     def task_done(self, status, parsed=False):
         if parsed:
             # Record delay between spawn time and scanning for statistics
-            now_secs = date_secs(datetime.utcnow())
-            item = self.queues[0][status['index_of_queue_item']]
-            seconds_within_band = (
-                int((datetime.utcnow() - self.refresh_date).total_seconds()) +
-                self.refresh_ms)
-            enforced_delay = (self.args.spawn_delay if item['kind'] == 'spawn'
-                              else 0)
-            start_delay = seconds_within_band - item['start'] + enforced_delay
-            safety_buffer = item['end'] - seconds_within_band
+            # This now holds the actual time of scan in seconds
+            scan_secs = parsed['scan_secs']
 
+            # It seems that the best solution is not to interfere with the
+            # item if the queue has been refreshed since scanning
+            if status['queue_version'] != self.queue_version:
+                log.info('Step item has changed since queue refresh')
+                return
+            item = self.queues[0][status['index_of_queue_item']]
+            safety_buffer = item['end'] - scan_secs
+            start_secs = item['start']
+            if item['kind'] == 'spawn':
+                start_secs -= self.args.spawn_delay
+            start_delay = (scan_secs - start_secs) % 3600
+            safety_buffer = item['end'] - scan_secs
             if safety_buffer < 0:
                 log.warning('Too late by %d sec for a %s at step %d', -
                             safety_buffer, item['kind'], item['step'])
@@ -1097,8 +1087,8 @@ class SpeedScan(HexSearch):
                     for item in self.queues[0]:
                         if (sp_id == item.get('sp', None) and
                                 item.get('done', None) is None and
-                                now_secs > item['start'] and
-                                now_secs < item['end']):
+                                scan_secs > item['start'] and
+                                scan_secs < item['end']):
                             item['done'] = 'Scanned'
 
 
