@@ -2008,8 +2008,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                     api, map_dict, forts, step_location, account)
             else:
                 log.error(
-                    'Pokestop can not be spun since parsing Pokestops is not' +
-                    'active. Check if \'-nk\' flag is accidently set.')
+                    'Pokestop can not be spun since parsing Pokestops is ' +
+                    'not active. Check if \'-nk\' flag is accidently set.')
 
         for f in forts:
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops.
@@ -2378,12 +2378,19 @@ def clean_db_loop(args):
 
             # If desired, clear old Pokemon spawns.
             if args.purge_data > 0:
+                log.info("Beginning purge of old Pokemon spawns.")
+                start = datetime.utcnow()
                 query = (Pokemon
                          .delete()
                          .where((Pokemon.disappear_time <
                                  (datetime.utcnow() -
                                   timedelta(hours=args.purge_data)))))
-                query.execute()
+                rows = query.execute()
+                end = datetime.utcnow()
+                diff = end-start
+                log.info("Completed purge of old Pokemon spawns. "
+                         "%i deleted in %f seconds.",
+                         rows, diff.total_seconds())
 
             log.info('Regular database cleaning complete.')
             time.sleep(60)
