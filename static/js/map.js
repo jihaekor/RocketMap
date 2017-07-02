@@ -553,8 +553,8 @@ function gymLabel(teamName, teamId, gymPoints, latitude, longitude, lastScanned 
                     <br>`
     }
 
-    if (raid !== null && raid['battle'] > Date.now()) {
-        var nextRaidStr = getDateStr(raid['battle'])
+    if (raid !== null && raid['raid_start'] > Date.now()) {
+        var nextRaidStr = getDateStr(raid['raid_start'])
         str += `
                     <div>
                         Level: ${raid['level']}
@@ -563,7 +563,7 @@ function gymLabel(teamName, teamId, gymPoints, latitude, longitude, lastScanned 
                         Raid Start: ${nextRaidStr}
                     </div>
                     <br>`
-    } else if (raid !== null && raid['battle'] < Date.now() && raid['end'] > Date.now() && raid['pokemon_id'] !== null) {
+    } else if (raid !== null && raid['raid_start'] < Date.now() && raid['end'] > Date.now() && raid['pokemon_id'] !== null) {
         var raidEndsStr = getDateStr(raid['end'])
         var types = raid['pokemon_types']
         var typesDisplay = ''
@@ -858,7 +858,7 @@ function customizePokemonMarker(marker, item, skipNotification) {
 
 function setupGymMarker(item) {
     var marker
-    if (item['raid'] !== null && item['raid']['battle'] < Date.now() && item['raid']['end'] > Date.now() && item['raid']['pokemon_id'] !== null) {
+    if (item['raid'] !== null && item['raid']['raid_start'] < Date.now() && item['raid']['end'] > Date.now() && item['raid']['pokemon_id'] !== null) {
         marker = new google.maps.Marker({
             position: {
                 lat: item['latitude'],
@@ -871,7 +871,7 @@ function setupGymMarker(item) {
             },
             zIndex: 500
         })
-    } else if (item['raid'] !== null && item['raid']['battle'] > Date.now()) {
+    } else if (item['raid'] !== null && item['raid']['raid_start'] > Date.now()) {
         marker = new google.maps.Marker({
             position: {
                 lat: item['latitude'],
@@ -941,7 +941,7 @@ function setupGymMarker(item) {
 }
 
 function updateGymMarker(item, marker) {
-    if (item['raid'] !== null && item['raid']['battle'] < Date.now() && item['raid']['end'] > Date.now() && item['raid']['pokemon_id'] !== null) {
+    if (item['raid'] !== null && item['raid']['raid_start'] < Date.now() && item['raid']['end'] > Date.now() && item['raid']['pokemon_id'] !== null) {
         marker.setIcon({
             url: 'static/icons/' + item['raid']['pokemon_id'] + '.png',
             scaledSize: new google.maps.Size(48, 48)
