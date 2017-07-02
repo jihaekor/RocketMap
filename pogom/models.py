@@ -658,7 +658,7 @@ class Gym(BaseModel):
                          Raid.move_2)
                      .join(Gym, on=(Raid.gym_id == Gym.gym_id))
                      .where(Raid.gym_id << gym_ids)
-                     .order_by(Raid.gym_id, Raid.battle)
+                     .order_by(Raid.gym_id, Raid.raid_start)
                      .distinct()
                      .dicts())
 
