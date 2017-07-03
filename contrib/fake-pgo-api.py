@@ -141,7 +141,6 @@ def api_login(lat, lng, r):
         forts.append({
             'enabled': True,
             'guard_pokemon_id': randint(1, 140),
-            'gym_points': randint(1, 30000),
             'id': 'gym-{}'.format(i),
             'is_in_battle': not getrandbits(1),
             'last_modified_timestamp_ms': int((time() - 10) * 1000),

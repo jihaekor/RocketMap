@@ -75,6 +75,7 @@ def wh_updater(args, queue, key_caches):
     while True:
         try:
             # Loop the queue.
+            log.critical('Queue: %s', queue.get())
             whtype, message = queue.get()
 
             # Get the proper cache if this type has one.
@@ -191,7 +192,7 @@ def __get_key_fields(whtype):
                     'individual_stamina', 'individual_defense',
                     'individual_attack', 'form', 'cp', 'pokemon_level'],
         'gym': ['team_id', 'guard_pokemon_id',
-                'gym_points', 'enabled', 'latitude', 'longitude'],
+                'enabled', 'latitude', 'longitude'],
         'gym_details': ['latitude', 'longitude', 'team', 'pokemon'],
         'raid': ['spawn', 'start', 'end', 'pokemon_id']
     }

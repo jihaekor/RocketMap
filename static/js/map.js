@@ -902,7 +902,7 @@ function setupGymMarker(item) {
     }
 
     marker.infoWindow = new google.maps.InfoWindow({
-        content: gymLabel(gymTypes[item['team_id']], item['team_id'], item['gym_points'], item['latitude'], item['longitude'], item['last_scanned'], item['last_modified'], item['name'], item['pokemon'], item['gym_id'], item['raid']),
+        content: gymLabel(gymTypes[item['team_id']], item['team_id'], 0, item['latitude'], item['longitude'], item['last_scanned'], item['last_modified'], item['name'], item['pokemon'], item['gym_id'], item['raid']),
         disableAutoPan: true
     })
 
@@ -959,7 +959,7 @@ function updateGymMarker(item, marker) {
         })
         marker.setZIndex(1)
     }
-    marker.infoWindow.setContent(gymLabel(gymTypes[item['team_id']], item['team_id'], item['gym_points'], item['latitude'], item['longitude'], item['last_scanned'], item['last_modified'], item['name'], item['pokemon'], item['gym_id'], item['raid']))
+    marker.infoWindow.setContent(gymLabel(gymTypes[item['team_id']], item['team_id'], 0, item['latitude'], item['longitude'], item['last_scanned'], item['last_modified'], item['name'], item['pokemon'], item['gym_id'], item['raid']))
     return marker
 }
 

@@ -2320,8 +2320,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                         f.get('owned_by_team', 0),
                     'guard_pokemon_id':
                         f.get('guard_pokemon_id', 0),
-                    'gym_points':
-                        f.get('gym_points', 0),
                     'slots_available':
                         f['gym_display'].get('slots_available', 0),
                     'total_cp':
@@ -2368,11 +2366,13 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
                             wh_raid = raids[f['id']].copy()
                             wh_raid.update({
                                 'gym_id': b64_gym_id,
+                                'latitude': f['latitude'],
+                                'longitude': f['longitude'],
                                 'spawn': raid_info['raid_spawn_ms'],
                                 'raid_start': raid_info['raid_battle_ms'],
                                 'raid_end': raid_info['raid_end_ms']
                             })
-                            wh_update_queue.put('raid', wh_raid)
+                            wh_update_queue.put(('raid', wh_raid))
 
         # Helping out the GC.
         del forts
