@@ -882,6 +882,10 @@ var StoreOptions = {
         default: 0,
         type: StoreTypes.Number
     },
+    'showRaidGymsOnly': {
+       default: 0,
+       type: StoreTypes.Number
+    },
     'showLastUpdatedGymsOnly': {
         default: 0,
         type: StoreTypes.Number
@@ -892,6 +896,14 @@ var StoreOptions = {
     },
     'maxGymLevel': {
         default: 6,
+        type: StoreTypes.Number
+    },
+    'minRaidLevel': {
+        default: 0,
+        type: StoreTypes.Number
+    },
+    'maxRaidLevel': {
+        default: 5,
         type: StoreTypes.Number
     },
     'showPokemon': {

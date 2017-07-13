@@ -8,6 +8,9 @@ var $selectRarityNotify
 var $textPerfectionNotify
 var $selectStyle
 var $selectIconSize
+var $selectRaidGymsOnly
+var $selectMinRaidLevel
+var $selectMaxRaidLevel
 var $switchOpenGymsOnly
 var $selectTeamGymsOnly
 var $selectLastUpdateGymsOnly
@@ -359,6 +362,9 @@ function initSidebar() {
     $('#gym-sidebar-switch').prop('checked', Store.get('useGymSidebar'))
     $('#gym-sidebar-wrapper').toggle(Store.get('showGyms'))
     $('#gyms-filter-wrapper').toggle(Store.get('showGyms'))
+    $('#raids-only-switch').val(Store.get('showRaidGymsOnly'))
+    $('#min-raid-level-gyms-filter-switch').val(Store.get('minRaidLevel'))
+    $('#max-raid-level-gyms-filter-switch').val(Store.get('maxRaidLevel'))
     $('#team-gyms-only-switch').val(Store.get('showTeamGymsOnly'))
     $('#open-gyms-only-switch').prop('checked', Store.get('showOpenGymsOnly'))
     $('#min-level-gyms-filter-switch').val(Store.get('minGymLevel'))
@@ -1469,6 +1475,7 @@ function updatePokestops() {
 
 function processGyms(i, item) {
     var gymLevel = getGymLevel(item)
+    var raid = item['raid']
     if (!Store.get('showGyms')) {
         return false // in case the checkbox was unchecked in the meantime.
     }
@@ -1502,6 +1509,24 @@ function processGyms(i, item) {
             return true
         }
     }
+    
+    if (raid) {
+        if (Store.get('showRaidGymsOnly') >= 1 && raid['end'] < Date.now()) {
+            removeGymFromMap(item['gym_id'])
+            return true
+        }
+
+        if (Store.get('showRaidGymsOnly') == 2 && raid['pokemon_id'] == null) {
+            removeGymFromMap(item['gym_id'])
+            return true
+        }
+
+    } else {
+        if (Store.get('showRaidGymsOnly') >= 1) {
+            removeGymFromMap(item['gym_id'])
+            return true
+        }
+    }
 
     if (gymLevel < Store.get('minGymLevel')) {
         removeGymFromMap(item['gym_id'])
@@ -1509,6 +1534,16 @@ function processGyms(i, item) {
     }
 
     if (gymLevel > Store.get('maxGymLevel')) {
+        removeGymFromMap(item['gym_id'])
+        return true
+    }
+    
+    if (raid !== null && raid['level'] < Store.get('minRaidLevel')) {
+        removeGymFromMap(item['gym_id'])
+        return true
+    }
+
+    if (raid !== null && raid['level'] > Store.get('maxRaidLevel')) {
         removeGymFromMap(item['gym_id'])
         return true
     }
@@ -2126,6 +2161,19 @@ $(function () {
         lastgyms = false
         updateMap()
     })
+    
+    $selectRaidGymsOnly = $('#raids-only-switch')
+
+    $selectRaidGymsOnly.select2({
+        placeholder: 'Only Show Gyms For Raids',
+        minimumResultsForSearch: Infinity
+    })
+
+    $selectRaidGymsOnly.on('change', function () {
+        Store.set('showRaidGymsOnly', this.value)
+        lastgyms = false
+        updateMap()
+    })
 
     $selectLastUpdateGymsOnly = $('#last-update-gyms-switch')
 
@@ -2162,6 +2210,32 @@ $(function () {
 
     $selectMaxGymLevel.on('change', function () {
         Store.set('maxGymLevel', this.value)
+        lastgyms = false
+        updateMap()
+    })
+    
+    $selectMinRaidLevel = $('#min-raid-level-gyms-filter-switch')
+
+    $selectMinRaidLevel.select2({
+        placeholder: 'Minimum Raid Level',
+        minimumResultsForSearch: Infinity
+    })
+
+    $selectMinRaidLevel.on('change', function () {
+        Store.set('minRaidLevel', this.value)
+        lastgyms = false
+        updateMap()
+    })
+
+    $selectMaxRaidLevel = $('#max-raid-level-gyms-filter-switch')
+
+    $selectMaxRaidLevel.select2({
+        placeholder: 'Maximum Raid Level',
+        minimumResultsForSearch: Infinity
+    })
+
+    $selectMaxRaidLevel.on('change', function () {
+        Store.set('maxRaidLevel', this.value)
         lastgyms = false
         updateMap()
     })
