@@ -429,6 +429,7 @@ function pokemonLabel(item) {
     var rarityDisplay = item['pokemon_rarity'] ? '(' + item['pokemon_rarity'] + ')' : ''
     var types = item['pokemon_types']
     var typesDisplay = ''
+    var encounterId = item['encounter_id']
     var id = item['pokemon_id']
     var latitude = item['latitude']
     var longitude = item['longitude']
@@ -478,7 +479,7 @@ function pokemonLabel(item) {
                 <span class='pokemon'>Level: </span><span class='pokemon'>${pokemonLevel}</span>
                 <span class='pokemon links exclude'><a href='javascript:excludePokemon(${id})'>Exclude</a></span>
                 <span class='pokemon links notify'><a href='javascript:notifyAboutPokemon(${id})'>Notify</a></span>
-                <span class='pokemon links remove'><a href='javascript:notifyAboutPokemon(${id})'>Remove</a></span>
+                <span class='pokemon links remove'><a href='javascript:removePokemonMarker("${encounterId}")'>Remove</a></span>
               </div>
           </div>
           <div class='pokemon container content-right'>
@@ -510,7 +511,7 @@ function pokemonLabel(item) {
             <span class='pokemon'>Level: </span><span class='pokemon no-encounter'>n/a</span>
             <span class='pokemon links exclude'><a href='javascript:excludePokemon(${id})'>Exclude</a></span>
             <span class='pokemon links notify'><a href='javascript:notifyAboutPokemon(${id})'>Notify</a></span>
-            <span class='pokemon links remove'><a href='javascript:notifyAboutPokemon(${id})'>Remove</a></span>
+            <span class='pokemon links remove'><a href='javascript:removePokemonMarker("${encounterId}")'>Remove</a></span>
           </div>
       </div>
       <div class='pokemon container content-right'>
@@ -1019,18 +1020,18 @@ function updateGymMarker(item, marker) {
     if (item.raid !== null && item.raid.end > Date.now() && item.raid.pokemon_id !== null) {
         marker.setIcon({
             url: 'static/images/raid/' + item.raid.pokemon_id + '.png',
-            scaledSize: new google.maps.Size(48, 48)
+            scaledSize: new google.maps.Size(36, 36)
         })
         marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1)
     } else if (item.raid !== null && item.raid.end > Date.now()) {
         marker.setIcon({
             url: 'static/images/raid/' + gymTypes[item.team_id] + '_' + getGymLevel(item) + '_' + item['raid']['level'] + '.png',
-            scaledSize: new google.maps.Size(48, 48)
+            scaledSize: new google.maps.Size(36, 36)
         })
     } else {
         marker.setIcon({
             url: 'static/images/gym/' + gymTypes[item.team_id] + '_' + getGymLevel(item) + '.png',
-            scaledSize: new google.maps.Size(48, 48)
+            scaledSize: new google.maps.Size(36, 36)
         })
         marker.setZIndex(1)
     }
