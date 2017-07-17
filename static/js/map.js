@@ -45,7 +45,6 @@ var locationMarker
 var rangeMarkers = ['pokemon', 'pokestop', 'gym']
 var searchMarker
 var storeZoom = true
-var scanPath
 var moves
 
 var oSwLat
@@ -117,10 +116,10 @@ function removePokemonMarker(encounterId) { // eslint-disable-line no-unused-var
 function initMap() { // eslint-disable-line no-unused-vars
     map = new google.maps.Map(document.getElementById('map'), {
         center: {
-            lat: centerLat,
-            lng: centerLng
+            lat: Number(getParameterByName('lat')) || centerLat,
+            lng: Number(getParameterByName('lon')) || centerLng
         },
-        zoom: Store.get('zoomLevel'),
+        zoom: Number(getParameterByName('zoom')) || Store.get('zoomLevel'),
         fullscreenControl: true,
         streetViewControl: false,
         mapTypeControl: false,
@@ -419,7 +418,7 @@ function openMapDirections(lat, lng) { // eslint-disable-line no-unused-vars
 function getDateStr(t) {
     var dateStr = 'Unknown'
     if (t) {
-        dateStr = moment(t).startOf('hour').fromNow()
+        dateStr = moment(t).fromNow()
     }
     return dateStr
 }
@@ -618,7 +617,7 @@ function gymLabel(gym, includeMembers = true) {
                 `
             }
         } else {
-            image = `<img class='gym sprite' src='static/images/raid/${gymTypes[gym.team_id]}_${getGymLevel(gym)}_${raid.level}.png'>`
+            image = `<img class='gym sprite' src='static/images/gym/${gymTypes[gym.team_id]}_${getGymLevel(gym)}_${raid.level}.png'>`
         }
 
         if (isUpcomingRaid) {
@@ -687,8 +686,8 @@ function gymLabel(gym, includeMembers = true) {
                   <div>
                     <span class='gym pokemon'>${member.pokemon_name}</span>
                   </div>
-                  <div class='gym pokemon motivation'>
-                    <img class='gym pokemon motivation heart' src='static/images/gym/Heart.png'> ${member.cp_decayed}
+                  <div>
+                    <img class='gym pokemon motivation heart' src='static/images/gym/Heart.png'> <span class='gym pokemon motivation'>${member.cp_decayed}</span>
                   </div>
                 </div>
               </center>
@@ -1020,18 +1019,18 @@ function updateGymMarker(item, marker) {
     if (item.raid !== null && item.raid.end > Date.now() && item.raid.pokemon_id !== null) {
         marker.setIcon({
             url: 'static/images/raid/' + item.raid.pokemon_id + '.png',
-            scaledSize: new google.maps.Size(36, 36)
+            scaledSize: new google.maps.Size(48, 48)
         })
         marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1)
     } else if (item.raid !== null && item.raid.end > Date.now()) {
         marker.setIcon({
-            url: 'static/images/raid/' + gymTypes[item.team_id] + '_' + getGymLevel(item) + '_' + item['raid']['level'] + '.png',
-            scaledSize: new google.maps.Size(36, 36)
+            url: 'static/images/gym/' + gymTypes[item.team_id] + '_' + getGymLevel(item) + '_' + item['raid']['level'] + '.png',
+            scaledSize: new google.maps.Size(48, 48)
         })
     } else {
         marker.setIcon({
             url: 'static/images/gym/' + gymTypes[item.team_id] + '_' + getGymLevel(item) + '.png',
-            scaledSize: new google.maps.Size(36, 36)
+            scaledSize: new google.maps.Size(48, 48)
         })
         marker.setZIndex(1)
     }
@@ -1042,7 +1041,7 @@ function updateGymMarker(item, marker) {
 function setupPokestopMarker(item) {
     var imagename = item['lure_expiration'] ? 'PokestopLured' : 'Pokestop'
     var image = {
-        url: 'static/images/pokestop/' + '/' + imagename + '.png',
+        url: 'static/images/pokestop/' + imagename + '.png',
         scaledSize: new google.maps.Size(32, 32)
     }
     var marker = new google.maps.Marker({
@@ -1111,8 +1110,8 @@ function getColorBySpawnTime(value) {
 
     var diff = (seconds - value)
     var hue = 275 // light purple when spawn is neither about to spawn nor active
-    if (diff >= 0 && diff <= 900) { // green to red over 15 minutes of active spawn
-        hue = (1 - (diff / 60 / 15)) * 120
+    if (diff >= 0 && diff <= 1800) { // green to red over 30 minutes of active spawn
+        hue = (1 - (diff / 60 / 30)) * 120
     } else if (diff < 0 && diff > -300) { // light blue to dark blue over 5 minutes til spawn
         hue = ((1 - (-diff / 60 / 5)) * 50) + 200
     }
@@ -1161,7 +1160,7 @@ function spawnPointIndex(color) {
 
 function setupSpawnpointMarker(item) {
     var circleCenter = new google.maps.LatLng(item['latitude'], item['longitude'])
-    var hue = getColorBySpawnTime(item.time)
+    var hue = getColorBySpawnTime(item.appear_time)
     var zoom = map.getZoom()
 
     var marker = new google.maps.Marker({
@@ -1614,7 +1613,7 @@ function updateSpawnPoints() {
 
     $.each(mapData.spawnpoints, function (key, value) {
         if (map.getBounds().contains(value.marker.getPosition())) {
-            var hue = getColorBySpawnTime(value['time'])
+            var hue = getColorBySpawnTime(value['appear_time'])
             value.marker.setIcon(changeSpawnIcon(hue, zoom))
             value.marker.setZIndex(spawnPointIndex(hue))
         }
@@ -1634,7 +1633,6 @@ function updateMap() {
         showInBoundsMarkers(mapData.pokestops, 'pokestop')
         showInBoundsMarkers(mapData.scanned, 'scanned')
         showInBoundsMarkers(mapData.spawnpoints, 'inbound')
-        //      drawScanPath(result.scanned);
         clearStaleMarkers()
 
         updateScanned()
@@ -1664,27 +1662,6 @@ function updateMap() {
         }
         timestamp = result.timestamp
         lastUpdateTime = Date.now()
-    })
-}
-
-function drawScanPath(points) { // eslint-disable-line no-unused-vars
-    var scanPathPoints = []
-    $.each(points, function (idx, point) {
-        scanPathPoints.push({
-            lat: point['latitude'],
-            lng: point['longitude']
-        })
-    })
-    if (scanPath) {
-        scanPath.setMap(null)
-    }
-    scanPath = new google.maps.Polyline({
-        path: scanPathPoints,
-        geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 2,
-        map: map
     })
 }
 
@@ -2081,8 +2058,25 @@ function toggleGymPokemonDetails(e) { // eslint-disable-line no-unused-vars
     e.nextElementSibling.classList.toggle('visible')
 }
 
+function getParameterByName(name, url) {
+    if (!url) {
+        url = window.location.search
+    }
+    name = name.replace(/[[\]]/g, '\\$&')
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
+    var results = regex.exec(url)
+    if (!results) {
+        return null
+    }
+    if (!results[2]) {
+        return ''
+    }
+    return decodeURIComponent(results[2].replace(/\+/g, ' '))
+}
+
+
 //
-// Page Ready Exection
+// Page Ready Execution
 //
 
 $(function () {
@@ -2318,6 +2312,7 @@ $(function () {
 })
 
 $(function () {
+    moment.locale(language)
     function formatState(state) {
         if (!state.id) {
             return state.text
