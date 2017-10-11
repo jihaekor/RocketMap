@@ -723,8 +723,6 @@ class AccountSet(object):
                         best_distance = distance_m
                         best_account = account
 
-                continue
-
             if best_account:
                 account = best_account
             elif empty_account:
