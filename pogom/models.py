@@ -2384,8 +2384,8 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
             if not hlvl_account:
                 log.error('No L30 accounts are available, please' +
                           ' consider adding more. Skipping encounter.')
-                # Wait 5 seconds and try again.
-                time.sleep(5)
+                # Wait 10 seconds and try again.
+                time.sleep(10)
                 continue
                 #return False
 
