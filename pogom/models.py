@@ -2358,8 +2358,7 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
     pokemon_id = None
     result = False
     counter = 0
-    flag_success = False
-    while (not flag_success) and counter < max_retries:
+    while (not result) and counter < max_retries:
         counter += 1
         try:
             hlvl_api = None
@@ -2468,16 +2467,17 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
 
                 if ('ENCOUNTER' in enc_responses and
                         enc_responses['ENCOUNTER'].status != 1):
-                    log.error('There was an error encountering Pokemon ID %s with '
-                              + 'account %s: %d.', pokemon_id,
-                              hlvl_account['username'],
-                              enc_responses['ENCOUNTER'].status)
-                    
                     # Update the consecutive failure count
                     if hlvl_account.get('consecutive_failures', 0) > 0:
                         hlvl_account['consecutive_failures'] += 1
                     else:
                         hlvl_account['consecutive_failures'] = 1
+                        
+                    log.error('There was an error encountering Pokemon ID %s with '
+                              + 'account %s: %d. Number of consecutive failures: %d.', pokemon_id,
+                              hlvl_account['username'],
+                              enc_responses['ENCOUNTER'].status, 
+                              hlvl_account['consecutive_failures'])
                               
                 else:
                     pokemon_info = enc_responses[
@@ -2496,17 +2496,17 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
                     hlvl_account['consecutive_failures'] = 0
 
         except Exception as e:
-            log.exception('There was an error encountering Pokemon ID %s with ' +
-                          'account %s: %s.',
-                          pokemon_id,
-                          hlvl_account['username'],
-                          e)
-            
             # Update the consecutive failure count
             if hlvl_account.get('consecutive_failures', 0) > 0:
                 hlvl_account['consecutive_failures'] += 1
             else:
                 hlvl_account['consecutive_failures'] = 1
+                
+            log.exception('There was an error encountering Pokemon ID %s with ' +
+                          'account %s: %s. Number of consecutive failures: %d.',
+                          pokemon_id,
+                          hlvl_account['username'],
+                          e, hlvl_account['consecutive_failures'])
                 
             continue
 
