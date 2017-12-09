@@ -674,6 +674,15 @@ class AccountSet(object):
                       account['username'])
         else:
             account['in_use'] = False
+            
+    def remove_from_set(self, set_name, account):
+        with self.next_lock:
+            # Remove from the set...
+            account_set = self.sets[set_name]
+            for i in range(len(account_set)):
+                if account['username'] == account_set[i]['username']:
+                    account_set.pop(i)
+                    break
 
     # Get next account that is ready to be used for scanning.
     def next(self, set_name, coords_to_scan):
@@ -699,6 +708,10 @@ class AccountSet(object):
 
                 # Make sure it's not captcha'd.
                 if account.get('captcha', False):
+                    continue
+                    
+                # Make sure the # of consecutive failures is less than 5.
+                if account.get('consecutive_failures', 0) >= 5:
                     continue
 
                 # Check if we're below speed limit for account.

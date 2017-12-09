@@ -2352,137 +2352,173 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
 
 
 def encounter_pokemon(args, pokemon, account, api, account_sets, status,
-                      key_scheduler):
+                      key_scheduler, max_retries=3):
     using_accountset = False
     hlvl_account = None
     pokemon_id = None
     result = False
-    try:
-        hlvl_api = None
-        pokemon_id = pokemon.pokemon_data.pokemon_id
-        scan_location = [pokemon.latitude, pokemon.longitude]
-        # If the host has L30s in the regular account pool, we
-        # can just use the current account.
-        if account['level'] >= 30:
-            hlvl_account = account
-            hlvl_api = api
-        else:
-            # Get account to use for IV and CP scanning.
-            hlvl_account = account_sets.next('30', scan_location)
-            using_accountset = True
-
-        time.sleep(args.encounter_delay)
-
-        # If we didn't get an account, we can't encounter.
-        if not hlvl_account:
-            log.error('No L30 accounts are available, please' +
-                      ' consider adding more. Skipping encounter.')
-            return False
-
-        # Logging.
-        log.info('Encountering Pokemon ID %s with account %s at %s, %s.',
-                 pokemon_id, hlvl_account['username'], scan_location[0],
-                 scan_location[1])
-
-        # If not args.no_api_store is enabled, we need to
-        # re-use an old API object if it's stored and we're
-        # using an account from the AccountSet.
-        if not args.no_api_store and using_accountset:
-            hlvl_api = hlvl_account.get('api', None)
-
-        # Make new API for this account if we're not using an
-        # API that's already logged in.
-        if not hlvl_api:
-            hlvl_api = setup_api(args, status, hlvl_account)
-
-        # If the already existent API is using a proxy but
-        # it's not alive anymore, we need to get a new proxy.
-        elif (args.proxy and
-              (hlvl_api._session.proxies['http'] not in args.proxy)):
-            proxy_idx, proxy_new = get_new_proxy(args)
-            hlvl_api.set_proxy({
-                'http': proxy_new,
-                'https': proxy_new})
-            hlvl_api._auth_provider.set_proxy({
-                'http': proxy_new,
-                'https': proxy_new})
-
-        # Hashing key.
-        # TODO: Rework inefficient threading.
-        if args.hash_key:
-            key = key_scheduler.next()
-            log.debug('Using hashing key %s for this encounter.', key)
-            hlvl_api.activate_hash_server(key)
-
-        # We have an API object now. If necessary, store it.
-        if using_accountset and not args.no_api_store:
-            hlvl_account['api'] = hlvl_api
-
-        # Set location.
-        hlvl_api.set_position(*scan_location)
-
-        # Log in.
-        check_login(args, hlvl_account, hlvl_api, status['proxy_url'])
-        encounter_level = hlvl_account['level']
-
-        # User error -> we skip freeing the account.
-        if encounter_level < 30:
-            log.warning('Expected account of level 30 or higher, ' +
-                        'but account %s is only level %d',
-                        hlvl_account['username'], encounter_level)
-            return False
-
-        # Encounter Pokémon.
-        encounter_result = encounter(
-            hlvl_api, hlvl_account, pokemon.encounter_id,
-            pokemon.spawn_point_id, scan_location)
-
-        # Handle errors.
-        if encounter_result:
-            enc_responses = encounter_result['responses']
-            # Check for captcha.
-            captcha_url = enc_responses['CHECK_CHALLENGE'].challenge_url
-
-            # Throw warning but finish parsing.
-            if len(captcha_url) > 1:
-                # Flag account.
-                hlvl_account['captcha'] = True
-                log.error('Account %s encountered a captcha.' +
-                          ' Account will not be used.',
-                          hlvl_account['username'])
-
-            if ('ENCOUNTER' in enc_responses and
-                    enc_responses['ENCOUNTER'].status != 1):
-                log.error('There was an error encountering Pokemon ID %s with '
-                          + 'account %s: %d.', pokemon_id,
-                          hlvl_account['username'],
-                          enc_responses['ENCOUNTER'].status)
+    counter = 0
+    flag_success = False
+    while (not flag_success) and counter < max_retries:
+        counter += 1
+        try:
+            hlvl_api = None
+            pokemon_id = pokemon.pokemon_data.pokemon_id
+            scan_location = [pokemon.latitude, pokemon.longitude]
+            # If the host has L30s in the regular account pool, we
+            # can just use the current account.
+            if account['level'] >= 30:
+                hlvl_account = account
+                hlvl_api = api
+                
+                # If we are here, we are using the original account. Thus, no need to retry.
+                counter = max_retries
+                
             else:
-                pokemon_info = enc_responses[
-                    'ENCOUNTER'].wild_pokemon.pokemon_data
-                # Logging: let the user know we succeeded.
-                log.info('Encounter for Pokemon ID %s at %s, %s ' +
-                         'successful: %s/%s/%s, %s CP.', pokemon_id,
-                         pokemon.latitude, pokemon.longitude,
-                         pokemon_info.individual_attack,
-                         pokemon_info.individual_defense,
-                         pokemon_info.individual_stamina, pokemon_info.cp)
+                # Get account to use for IV and CP scanning.
+                hlvl_account = account_sets.next('30', scan_location)
+                using_accountset = True
 
-                result = pokemon_info
+            time.sleep(args.encounter_delay)
 
-    except Exception as e:
-        log.exception('There was an error encountering Pokemon ID %s with ' +
-                      'account %s: %s.',
-                      pokemon_id,
-                      hlvl_account['username'],
-                      e)
+            # If we didn't get an account, we can't encounter.
+            if not hlvl_account:
+                log.error('No L30 accounts are available, please' +
+                          ' consider adding more. Skipping encounter.')
+                # Wait 5 seconds and try again.
+                time.sleep(5)
+                continue
+                #return False
 
-    # We're done with the encounter. If it's from an
-    # AccountSet, release account back to the pool.
-    if using_accountset:
-        account_sets.release(hlvl_account)
+            # Logging.
+            log.info('Encountering Pokemon ID %s with account %s at %s, %s.',
+                     pokemon_id, hlvl_account['username'], scan_location[0],
+                     scan_location[1])
 
-    return result
+            # If not args.no_api_store is enabled, we need to
+            # re-use an old API object if it's stored and we're
+            # using an account from the AccountSet.
+            if not args.no_api_store and using_accountset:
+                hlvl_api = hlvl_account.get('api', None)
+
+            # Make new API for this account if we're not using an
+            # API that's already logged in.
+            if not hlvl_api:
+                hlvl_api = setup_api(args, status, hlvl_account)
+
+            # If the already existent API is using a proxy but
+            # it's not alive anymore, we need to get a new proxy.
+            elif (args.proxy and
+                  (hlvl_api._session.proxies['http'] not in args.proxy)):
+                proxy_idx, proxy_new = get_new_proxy(args)
+                hlvl_api.set_proxy({
+                    'http': proxy_new,
+                    'https': proxy_new})
+                hlvl_api._auth_provider.set_proxy({
+                    'http': proxy_new,
+                    'https': proxy_new})
+
+            # Hashing key.
+            # TODO: Rework inefficient threading.
+            if args.hash_key:
+                key = key_scheduler.next()
+                log.debug('Using hashing key %s for this encounter.', key)
+                hlvl_api.activate_hash_server(key)
+
+            # We have an API object now. If necessary, store it.
+            if using_accountset and not args.no_api_store:
+                hlvl_account['api'] = hlvl_api
+
+            # Set location.
+            hlvl_api.set_position(*scan_location)
+
+            # Log in.
+            check_login(args, hlvl_account, hlvl_api, status['proxy_url'])
+            encounter_level = hlvl_account['level']
+
+            # User error -> we skip freeing the account.
+            if encounter_level < 30:
+                log.warning('Expected account of level 30 or higher, ' +
+                            'but account %s is only level %d',
+                            hlvl_account['username'], encounter_level)
+                # Remove from the set
+                if using_accountset:
+                    account_sets.remove_from_set('30', hlvl_account)
+                continue
+                #return False
+
+            # Encounter Pokémon.
+            encounter_result = encounter(
+                hlvl_api, hlvl_account, pokemon.encounter_id,
+                pokemon.spawn_point_id, scan_location)
+
+            # Handle errors.
+            if encounter_result:
+                enc_responses = encounter_result['responses']
+                # Check for captcha.
+                captcha_url = enc_responses['CHECK_CHALLENGE'].challenge_url
+
+                # Throw warning but finish parsing.
+                if len(captcha_url) > 1:
+                    # Flag account.
+                    hlvl_account['captcha'] = True
+                    log.error('Account %s encountered a captcha.' +
+                              ' Account will not be used.',
+                              hlvl_account['username'])
+
+                if ('ENCOUNTER' in enc_responses and
+                        enc_responses['ENCOUNTER'].status != 1):
+                    log.error('There was an error encountering Pokemon ID %s with '
+                              + 'account %s: %d.', pokemon_id,
+                              hlvl_account['username'],
+                              enc_responses['ENCOUNTER'].status)
+                    
+                    # Update the consecutive failure count
+                    if hlvl_account.get('consecutive_failures', 0) > 0:
+                        hlvl_account['consecutive_failures'] += 1
+                    else:
+                        hlvl_account['consecutive_failures'] = 1
+                              
+                else:
+                    pokemon_info = enc_responses[
+                        'ENCOUNTER'].wild_pokemon.pokemon_data
+                    # Logging: let the user know we succeeded.
+                    log.info('Encounter for Pokemon ID %s at %s, %s ' +
+                             'successful: %s/%s/%s, %s CP.', pokemon_id,
+                             pokemon.latitude, pokemon.longitude,
+                             pokemon_info.individual_attack,
+                             pokemon_info.individual_defense,
+                             pokemon_info.individual_stamina, pokemon_info.cp)
+
+                    result = pokemon_info
+                    
+                    # Reset the consecutive failures
+                    hlvl_account['consecutive_failures'] = 0
+
+        except Exception as e:
+            log.exception('There was an error encountering Pokemon ID %s with ' +
+                          'account %s: %s.',
+                          pokemon_id,
+                          hlvl_account['username'],
+                          e)
+            
+            # Update the consecutive failure count
+            if hlvl_account.get('consecutive_failures', 0) > 0:
+                hlvl_account['consecutive_failures'] += 1
+            else:
+                hlvl_account['consecutive_failures'] = 1
+                
+            continue
+
+        # We're done with the encounter. If it's from an
+        # AccountSet, release account back to the pool.
+        if using_accountset:
+            account_sets.release(hlvl_account)
+    
+    if result:
+        return result
+    else:
+        return False
 
 
 def parse_gyms(args, gym_responses, wh_update_queue, db_update_queue):
