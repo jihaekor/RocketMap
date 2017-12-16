@@ -869,6 +869,9 @@ var StoreOptions = {
     'excludedRarity': {
         default: 0, // 0: none, 1: <=Common, 2: <=Uncommon, 3: <=Rare, 4: <=Very Rare, 5: <=Ultra Rare
         type: StoreTypes.Number
+    'remember_text_level_notify': {
+        default: '',
+        type: StoreTypes.Number
     },
     'showRaids': {
         default: false,
