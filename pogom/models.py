@@ -123,6 +123,7 @@ class Pokemon(LatLongModel):
     height = FloatField(null=True)
     gender = SmallIntegerField(null=True)
     form = SmallIntegerField(null=True)
+    weather_boosted_condition = SmallIntegerField(null=True)
     last_modified = DateTimeField(
         null=True, index=True, default=datetime.utcnow)
 
@@ -1971,8 +1972,15 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 'height': None,
                 'weight': None,
                 'gender': p.pokemon_data.pokemon_display.gender,
-                'form': None
+                'form': None,
+                'weather_boosted_condition': None
+
             }
+
+            # Check Weather
+            weather_boosted_condition = p.pokemon_data.pokemon_display.weather_boosted_condition
+            if weather_boosted_condition:
+                pokemon[p.encounter_id]['weather_boosted_condition'] = weather_boosted_condition
 
             # Check for Unown's alphabetic character.
             if pokemon_id == 201:
@@ -2007,7 +2015,8 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                         'seconds_until_despawn': seconds_until_despawn,
                         'spawn_start': start_end[0],
                         'spawn_end': start_end[1],
-                        'player_level': encounter_level
+                        'player_level': encounter_level,
+                        'weather': weather_boosted_condition
                     })
                     if wh_poke['cp_multiplier'] is not None:
                         wh_poke.update({
@@ -2986,7 +2995,15 @@ def database_migrate(db, old_ver):
                                 DateTimeField(
                                     null=False, default=datetime.utcnow())),
             migrator.add_column('gym', 'total_cp',
-                                SmallIntegerField(null=False, default=0)))
+                                SmallIntegerField(null=False, default=0))
+        )
+
+    if old_ver < 21:
+        migrate(
+            migrator.add_column('pokemon', 'weather_boosted_condition',
+                                SmallIntegerField(null=True))
+        )
+
 
     if old_ver < 21:
         # First rename all tables being modified.
