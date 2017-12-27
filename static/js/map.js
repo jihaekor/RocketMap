@@ -88,6 +88,22 @@ const excludedRaritiesList = [
   ['common', 'uncommon', 'rare', 'very rare', 'ultra rare']
 ]
 
+var currentDate = new Date()
+var currentHour = currentDate.getHours()
+var clear = (currentHour >= 6 && currentHour < 19) ? 'weatherIcon_small_sunny.png' : 'weatherIcon_small_clear.png'
+var partlycloudy = (currentHour >= 6 && currentHour < 19) ? 'weatherIcon_small_partlycloudy_day.png' : 'weatherIcon_small_partlycloudy_night.png'
+
+
+const weatherImages = {
+    1: clear,
+    2: 'weatherIcon_small_rain.png',
+    3: partlycloudy,
+    4: 'weatherIcon_small_cloudy.png',
+    5: 'weatherIcon_small_windy.png',
+    6: 'weatherIcon_small_snow.png',
+    7: 'weatherIcon_small_fog.png'
+}
+
 /*
  text place holders:
  <pkm> - pokemon name
@@ -235,8 +251,6 @@ function initMap() { // eslint-disable-line no-unused-vars
     map.mapTypes.set('style_pgo_night', stylePgoNight)
 
     // dynamic map style chooses stylePgoDay or stylePgoNight depending on client time
-    var currentDate = new Date()
-    var currentHour = currentDate.getHours()
     var stylePgoDynamic = (currentHour >= 6 && currentHour < 19) ? stylePgoDay : stylePgoNight
     map.mapTypes.set('style_pgo_dynamic', stylePgoDynamic)
 
@@ -547,11 +561,17 @@ function pokemonLabel(item) {
     var form = item['form']
     var cp = item['cp']
     var cpMultiplier = item['cp_multiplier']
+    var weather_boosted_condition = item['weather_boosted_condition']
+    var weatherDisplay = ''
     const showStats = Store.get('showPokemonStats')
 
     $.each(types, function (index, type) {
         typesDisplay += getTypeSpan(type)
     })
+
+    if (weather_boosted_condition) {
+        weatherDisplay = `<img src='static/images/weather/${weatherImages[weather_boosted_condition]}' style="width: 24px; vertical-align: middle;">`
+    }
 
     var details = ''
 
@@ -564,7 +584,7 @@ function pokemonLabel(item) {
 
     contentstring += `
     <div class='pokemon name'>
-      ${name} <span class='pokemon name pokedex'><a href='http://pokemon.gameinfo.io/en/pokemon/${id}' target='_blank' title='View in Pokédex'>#${id}</a></span> ${formString} <span class='pokemon gender rarity'>${genderType[gender - 1]} ${rarityDisplay}</span> ${typesDisplay}
+      ${name} <span class='pokemon name pokedex'><a href='http://pokemon.gameinfo.io/en/pokemon/${id}' target='_blank' title='View in Pokédex'>#${id}</a></span> ${formString} <span class='pokemon gender rarity'>${genderType[gender - 1]} ${rarityDisplay}</span> ${typesDisplay} ${weatherDisplay}
     </div>`
 
     if (showStats && cp !== null && cpMultiplier !== null) {
