@@ -2489,6 +2489,9 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
                               enc_responses['ENCOUNTER'].status, 
                               hlvl_account['consecutive_failures'])
                               
+                    # Wait randomly between 5-15 seconds and try again.
+                    time.sleep(randint(50, 150) * 0.1)
+                              
                 else:
                     pokemon_info = enc_responses[
                         'ENCOUNTER'].wild_pokemon.pokemon_data
@@ -2517,6 +2520,9 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
                           pokemon_id,
                           hlvl_account['username'],
                           e, hlvl_account['consecutive_failures'])
+                          
+            # Wait randomly between 5-15 seconds and try again.
+            time.sleep(randint(50, 150) * 0.1)
                 
             continue
 
