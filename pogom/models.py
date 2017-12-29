@@ -2046,19 +2046,13 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 'weight': None,
                 'gender': p.pokemon_data.pokemon_display.gender,
                 'form': None, 
-                'weather_boosted_condition': None, 
+                'weather_boosted_condition': p.pokemon_data.pokemon_display.weather_boosted_condition, 
             }
 
             # Check for Unown's alphabetic character.
             if pokemon_id == 201:
                 pokemon[p.encounter_id]['form'] = (p.pokemon_data
                                                     .pokemon_display.form)
-                                                    
-            # Check for weather
-            weather_boosted_condition = p.pokemon_data.pokemon_display.weather_boosted_condition
-            log.info('Weather Boosted Condition: %s.', weather_boosted_condition)
-            if weather_boosted_condition:
-                pokemon[p.encounter_id]['weather_boosted_condition'] = weather_boosted_condition
 
             # We need to check if exist and is not false due to a request error
             if pokemon_info:
