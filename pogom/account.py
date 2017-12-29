@@ -703,6 +703,7 @@ class AccountSet(object):
             empty_account = False
             best_account = False
             best_distance = 1000000
+            best_failure_count = 100
 
             for i in range(len(account_set)):
                 account = account_set[i]
@@ -732,14 +733,23 @@ class AccountSet(object):
                 else:
                     seconds_passed = now - last_scanned
                     old_coords = account.get('last_coords', coords_to_scan)
+                    consecutive_failures = account.get('consecutive_failures', 0)
                     distance_m = distance(old_coords, coords_to_scan)
                     cooldown_time_sec = distance_m / self.kph * 3.6
-
-                    # Closer account? Great!
-                    if (seconds_passed >= cooldown_time_sec and
-                            distance_m < best_distance):
-                        best_distance = distance_m
-                        best_account = account
+                    
+                    if seconds_passed >= cooldown_time_sec:
+                        # Less # of failures and closer account? Perfect!
+                        if (consecutive_failures < best_failure_count and distance_m < best_distance):
+                            best_distance = distance_m
+                            best_failure_count = consecutive_failures
+                            best_account = account
+                            continue
+                            
+                        # Even if distance is greater, if less # of failures, Great!
+                        if consecutive_failures < best_failure_count:
+                            best_distance = distance_m
+                            best_failure_count = consecutive_failures
+                            best_account = account
 
             if best_account:
                 account = best_account
