@@ -24,6 +24,7 @@ from base64 import b64encode
 from cachetools import TTLCache
 from cachetools import cached
 from timeit import default_timer
+from random import randint
 
 from .utils import (get_pokemon_name, get_pokemon_rarity, get_pokemon_types,
                     get_args, cellid, in_radius, date_secs, clock_between,
@@ -2357,7 +2358,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
 
 
 def encounter_pokemon(args, pokemon, account, api, account_sets, status,
-                      key_scheduler, max_retries=3):
+                      key_scheduler, max_retries=10):
     using_accountset = False
     hlvl_account = None
     pokemon_id = None
@@ -2391,8 +2392,8 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
                     log.error('No L30 accounts are available, please consider adding more. Skipping encounter.')
                 else:
                     log.info('No L30 accounts are available, please consider adding more. Skipping encounter. Try %d of %d.', counter, max_retries)
-                    # Wait 10 seconds and try again.
-                    time.sleep(10)
+                    # Wait randomly between 5-15 seconds and try again.
+                    time.sleep(randint(50, 150) * 0.1)
                 
                 continue
                 #return False
