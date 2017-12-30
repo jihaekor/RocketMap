@@ -716,8 +716,8 @@ class AccountSet(object):
                 if account.get('captcha', False):
                     continue
                     
-                # Make sure the # of consecutive failures is less than 5.
-                if account.get('consecutive_failures', 0) >= 5:
+                # Make sure the # of consecutive failures is less than 100.
+                if account.get('consecutive_failures', 0) >= 100:
                     continue
 
                 # Check if we're below speed limit for account.
