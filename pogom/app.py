@@ -3,26 +3,27 @@
 
 import calendar
 import logging
+import math
+from bisect import bisect_left
+from datetime import datetime
 
 from flask import Flask, abort, jsonify, render_template, request,\
     make_response, send_from_directory
+from flask import url_for
 from flask.json import JSONEncoder
 from flask_compress import Compress
-from datetime import datetime
+from pgoapi.protos.pogoprotos.map.weather.gameplay_weather_pb2 import *
+from pgoapi.protos.pogoprotos.map.weather.weather_alert_pb2 import *
+from pgoapi.protos.pogoprotos.networking.responses.get_map_objects_response_pb2 import *
 from s2sphere import LatLng
-from pogom.utils import get_args
-from bisect import bisect_left
 
+from pogom.utils import get_args
 from pogom.weather import get_weather_cells, get_s2_coverage, get_weather_alerts
+from .blacklist import fingerprints, get_ip_blacklist
 from .models import (Pokemon, Gym, Pokestop, ScannedLocation,
                      MainWorker, WorkerStatus, Token, HashKeys,
                      SpawnPoint, Weather)
 from .utils import now, dottedQuadToNum, degrees_to_cardinal
-from .blacklist import fingerprints, get_ip_blacklist
-
-from pgoapi.protos.pogoprotos.map.weather.gameplay_weather_pb2 import *
-from pgoapi.protos.pogoprotos.map.weather.weather_alert_pb2 import *
-from pgoapi.protos.pogoprotos.networking.responses.get_map_objects_response_pb2 import *
 
 log = logging.getLogger(__name__)
 compress = Compress()
@@ -75,7 +76,6 @@ class Pogom(Flask):
 
     def get_weather(self, page=1):
         db_weathers = Weather.get_weathers()
-        #return jsonify(db_weathers)
 
         def td(cell):
             return "<td>{}</td>".format(cell)
