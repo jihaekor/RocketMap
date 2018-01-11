@@ -88,20 +88,15 @@ const excludedRaritiesList = [
   ['common', 'uncommon', 'rare', 'very rare', 'ultra rare']
 ]
 
-var currentDate = new Date()
-var currentHour = currentDate.getHours()
-var clear = (currentHour >= 6 && currentHour < 19) ? 'weatherIcon_small_sunny.png' : 'weatherIcon_small_clear.png'
-var partlycloudy = (currentHour >= 6 && currentHour < 19) ? 'weatherIcon_small_partlycloudy_day.png' : 'weatherIcon_small_partlycloudy_night.png'
+const weatherTypes = ['none', 'clear', 'rain', 'partly_cloudy', 'cloudy', 'windy', 'snow', 'fog']
 
-
-const weatherImages = {
-    1: clear,
-    2: 'weatherIcon_small_rain.png',
-    3: partlycloudy,
-    4: 'weatherIcon_small_cloudy.png',
-    5: 'weatherIcon_small_windy.png',
-    6: 'weatherIcon_small_snow.png',
-    7: 'weatherIcon_small_fog.png'
+function weatherImage(weatherCondition, timeOfDay) {
+    var weatherType = weatherTypes[weatherCondition]
+    if (timeOfDay && ((weatherCondition == 1) || (weatherCondition == 3))) {
+        return `weather_${weatherType}_${timeOfDay}.png`
+    } else {
+        return `weather_${weatherType}.png`
+    }
 }
 
 /*
@@ -251,6 +246,8 @@ function initMap() { // eslint-disable-line no-unused-vars
     map.mapTypes.set('style_pgo_night', stylePgoNight)
 
     // dynamic map style chooses stylePgoDay or stylePgoNight depending on client time
+    var currentDate = new Date()
+    var currentHour = currentDate.getHours()
     var stylePgoDynamic = (currentHour >= 6 && currentHour < 19) ? stylePgoDay : stylePgoNight
     map.mapTypes.set('style_pgo_dynamic', stylePgoDynamic)
 
@@ -561,16 +558,19 @@ function pokemonLabel(item) {
     var form = item['form']
     var cp = item['cp']
     var cpMultiplier = item['cp_multiplier']
-    var weather_boosted_condition = item['weather_boosted_condition']
+    var weatherBoostedCondition = item['weather_boosted_condition']
     var weatherDisplay = ''
+    var currentDate = new Date()
+    var currentHour = currentDate.getHours()
+    var timeOfDay = (currentHour >= 6 && currentHour < 19) ? 'day' : 'night'
     const showStats = Store.get('showPokemonStats')
 
     $.each(types, function (index, type) {
         typesDisplay += getTypeSpan(type)
     })
 
-    if (weather_boosted_condition) {
-        weatherDisplay = `<img src='static/images/weather/${weatherImages[weather_boosted_condition]}' style="width: 24px; vertical-align: middle;">`
+    if (weatherBoostedCondition) {
+        weatherDisplay = `<img src='static/images/weather/${weatherImage(weatherBoostedCondition, timeOfDay)}' style="width: 24px; vertical-align: middle;">`
     }
 
     var details = ''
