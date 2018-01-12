@@ -92,7 +92,7 @@ const weatherTypes = ['none', 'clear', 'rain', 'partly_cloudy', 'cloudy', 'windy
 
 function weatherImage(weatherCondition, timeOfDay) {
     var weatherType = weatherTypes[weatherCondition]
-    if (timeOfDay && ((weatherCondition == 1) || (weatherCondition == 3))) {
+    if (timeOfDay && ((weatherCondition === 1) || (weatherCondition === 3))) {
         return `weather_${weatherType}_${timeOfDay}.png`
     } else {
         return `weather_${weatherType}.png`
