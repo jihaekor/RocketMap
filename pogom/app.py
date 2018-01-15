@@ -7,17 +7,16 @@ import math
 from bisect import bisect_left
 from datetime import datetime
 
-import pgoapi.protos.pogoprotos.map.weather.gameplay_weather_pb2
-import pgoapi.protos.pogoprotos.networking.responses \
-    .get_map_objects_response_pb2
 from flask import Flask, abort, jsonify, render_template, request,\
     make_response, send_from_directory
 from flask import url_for
 from flask.json import JSONEncoder
 from flask_compress import Compress
 from pgoapi.protos.pogoprotos.map.weather.weather_alert_pb2 import WeatherAlert
-from pgoapi.protos.pogoprotos.networking.responses.get_map_objects_response_pb2\
-    import GetMapObjectsResponse
+from pgoapi.protos.pogoprotos.map.weather.gameplay_weather_pb2 \
+    import GameplayWeather
+from pgoapi.protos.pogoprotos.networking.responses\
+    .get_map_objects_response_pb2 import GetMapObjectsResponse
 from s2sphere import LatLng
 
 from pogom.utils import get_args
@@ -123,9 +122,7 @@ class Pogom(Flask):
             lines += td(s['fog_level'])
             lines += td(degrees_to_cardinal(s['wind_direction']))
             lines += td(
-                pgoapi.protos.pogoprotos.map.weather.gameplay_weather_pb2
-                .GameplayWeather.WeatherCondition
-                .Name(s['gameplay_weather'])
+                GameplayWeather.WeatherCondition.Name(s['gameplay_weather'])
             )
             if s['severity'] is None:
                 s['severity'] = 0
