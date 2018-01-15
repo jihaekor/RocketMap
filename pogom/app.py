@@ -16,6 +16,8 @@ from flask import url_for
 from flask.json import JSONEncoder
 from flask_compress import Compress
 from pgoapi.protos.pogoprotos.map.weather.weather_alert_pb2 import WeatherAlert
+from pgoapi.protos.pogoprotos.networking.responses.get_map_objects_response_pb2\
+    import GetMapObjectsResponse
 from s2sphere import LatLng
 
 from pogom.utils import get_args
@@ -130,8 +132,7 @@ class Pogom(Flask):
             lines += td(WeatherAlert.Severity.Name(s['severity']))
             lines += td(s['warn_weather'])
             lines += td(s['last_updated'])
-            lines += td(pgoapi.protos.pogoprotos.networking.responses
-                        .GetMapObjectsResponse.TimeOfDay.Name(s['world_time']))
+            lines += td(GetMapObjectsResponse.TimeOfDay.Name(s['world_time']))
             lines += "</tr>"
         lines += "</table>"
 
