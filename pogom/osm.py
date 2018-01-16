@@ -3,12 +3,11 @@ import json
 import logging
 from geofence import Geofences
 from models import Gym, init_database
-from flask import Flask
 from utils import get_args
 
 args = get_args
 
-app = Flask(__name__)
+app = None
 log = logging.getLogger(__name__)
 db = init_database(app)
 
@@ -74,6 +73,11 @@ def exgyms(geofence):
                         'lon': float(gym[1]['longitude'])}
             # Check if gyms falls within a designated park and update if park
             if Geofences.is_point_in_polygon_custom(gympoint, data):
-                gymname = Gym.get_gym(gym[0])['name'].encode('utf8')
-                log.info('gym:{} could spawn legendary raid'.format(gymname))
+
+                # Try to get Gym name, but default to id if missing
+                try:
+                    gymname = Gym.get_gym(gym[0])['name'].encode('utf8')
+                except AttributeError:
+                    gymname = gym[0]
+                log.info('{} is eligible for legendary raid'.format(gymname))
                 Gym.is_gym_park(gym[0], True)
