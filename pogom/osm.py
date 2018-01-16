@@ -1,4 +1,6 @@
-import overpy, json, logging
+import overpy
+import json
+import logging
 from geofence import Geofences
 from models import Gym, init_database
 from flask import Flask
@@ -10,8 +12,7 @@ app = Flask(__name__)
 log = logging.getLogger(__name__)
 db = init_database(app)
 
-
-def ex_query(s,w,n,e):
+def ex_query(s, w, n, e):
 
     # Query Overpass for known gym areas
     api = overpy.Overpass(xml_parser=0)
@@ -21,7 +22,6 @@ def ex_query(s,w,n,e):
     [timeout:620]
     [bbox:{},{},{},{}];
     (
-    
     //Tags that are confirmed to classify gyms as 'parks' for EX Raids
         way[leisure=park];
         way[landuse=recreation_ground];
@@ -35,20 +35,20 @@ def ex_query(s,w,n,e):
         way[landuse=greenfield];
         way[natural=scrub];
         way[natural=grassland];
-        way[landuse=farmyard];
-    
+        way[landuse=farmyard];    
     );
     out body;
     >;
     out skel qt;
-    """.format(s,w,n,e))
+    """.format(s, w, n, e))
 
     return result
+
 
 def exgyms(geofence):
     # Parse geofence file
     log.info('Finding border points from geofence')
-    f = json.loads(json.dumps(Geofences.parse_geofences_file(geofence,'')))
+    f = json.loads(json.dumps(Geofences.parse_geofences_file(geofence, '')))
     fence = f[0]['polygon']
     # Figure out borders for bounding box
     south = min(fence, key=lambda ev: ev['lat'])['lat']
@@ -58,23 +58,20 @@ def exgyms(geofence):
     log.info('Finding parks within zone')
     ex_gyms = ex_query(south, west, north, east)
 
-    gyms = Gym.get_gyms(south,west,north,east)
+    gyms = Gym.get_gyms(south, west, north, east)
     log.info('Checking {} gyms against {} parks'.format(len(gyms),
                                                         len(ex_gyms.ways)))
     for way in ex_gyms.ways:
         data = []
         for node in way.nodes:
             data.append({'lat': float(node.lat),
-                         'lon': float(node.lon)
-                        })
+                         'lon': float(node.lon)})
 
         for gym in gyms.items():
 
             gympoint = {'lat': float(gym[1]['latitude']),
-                        'lon': float(gym[1]['longitude'])
-                       }
+                        'lon': float(gym[1]['longitude'])}
             # Check if gyms falls within a designated park and update if park
-            if Geofences.is_point_in_polygon_custom(gympoint,data):
+            if Geofences.is_point_in_polygon_custom(gympoint, data):
                 log.info('gym:{} could spawn legendary raid'.format(gym[0]))
-                Gym.is_gym_park(gym[0],True)
-
+                Gym.is_gym_park(gym[0], True)

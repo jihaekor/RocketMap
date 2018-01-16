@@ -31,8 +31,6 @@ from pogom.proxy import initialize_proxies
 from pogom.search import search_overseer_thread
 from time import strftime
 
-
-
 class LogFilter(logging.Filter):
 
     def __init__(self, level):
@@ -268,7 +266,6 @@ def main():
             exgyms(args.geofence_file)
             log.info('Finished checking gyms against OSM parks, exiting')
             sys.exit(1)
-
 
     # Abort if status name is not valid.
     regexp = re.compile('^([\w\s\-.]+)$')
