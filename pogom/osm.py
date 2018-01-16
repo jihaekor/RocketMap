@@ -74,5 +74,6 @@ def exgyms(geofence):
                         'lon': float(gym[1]['longitude'])}
             # Check if gyms falls within a designated park and update if park
             if Geofences.is_point_in_polygon_custom(gympoint, data):
-                log.info('gym:{} could spawn legendary raid'.format(gym[0]))
+                gymname = Gym.get_gym(gym[0])['name'].encode('utf8')
+                log.info('gym:{} could spawn legendary raid'.format(gymname))
                 Gym.is_gym_park(gym[0], True)

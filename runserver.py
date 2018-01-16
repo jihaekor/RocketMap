@@ -259,15 +259,6 @@ def main():
             "You can't use no-server and only-server at the same time, silly.")
         sys.exit(1)
 
-    if args.ex_gyms:
-        if args.geofence_file == '':
-            log.critical('A geofence is required to find EX-gyms')
-            sys.exit(1)
-        else:
-            exgyms(args.geofence_file)
-            log.info('Finished checking gyms against OSM parks, exiting')
-            sys.exit(1)
-
     # Abort if status name is not valid.
     regexp = re.compile('^([\w\s\-.]+)$')
     if not regexp.match(args.status_name):
@@ -334,6 +325,15 @@ def main():
     db = startup_db(app, args.clear_db)
 
     args.root_path = os.path.dirname(os.path.abspath(__file__))
+
+    if args.ex_gyms:
+        if args.geofence_file == '':
+            log.critical('A geofence is required to find EX-gyms')
+            sys.exit(1)
+        else:
+            exgyms(args.geofence_file)
+            log.info('Finished checking gyms against OSM parks, exiting')
+            sys.exit(1)
 
     # Control the search status (running or not) across threads.
     control_flags = {
