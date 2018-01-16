@@ -9,7 +9,6 @@ from datetime import datetime
 
 from flask import Flask, abort, jsonify, render_template, request,\
     make_response, send_from_directory
-from flask import url_for
 from flask.json import JSONEncoder
 from flask_compress import Compress
 from pgoapi.protos.pogoprotos.map.weather.weather_alert_pb2 import WeatherAlert
