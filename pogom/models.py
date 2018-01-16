@@ -40,7 +40,7 @@ args = get_args()
 flaskDb = FlaskDB()
 cache = TTLCache(maxsize=100, ttl=60 * 5)
 
-db_schema_version = 21
+db_schema_version = 22
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
@@ -438,6 +438,7 @@ class Gym(LatLongModel):
     guard_pokemon_id = SmallIntegerField()
     slots_available = SmallIntegerField()
     enabled = BooleanField()
+    park = BooleanField(default=False)
     latitude = DoubleField()
     longitude = DoubleField()
     total_cp = SmallIntegerField()
@@ -630,6 +631,10 @@ class Gym(LatLongModel):
             pass
 
         return result
+
+    @staticmethod
+    def is_gym_park(id, park):
+        Gym.update(park=park).where(Gym.gym_id == str(id)).execute()
 
 
 class Raid(BaseModel):
@@ -3060,6 +3065,11 @@ def database_migrate(db, old_ver):
         db.execute_sql('DROP TABLE `spawnpoint_old`;')
         db.execute_sql('DROP TABLE `gymmember_old`;')
         db.execute_sql('DROP TABLE `gympokemon_old`;')
+
+    if old_ver < 22:
+        migrate(
+            migrator.add_column('gym', 'park', BooleanField(default=False)))
+
     # Always log that we're done.
     log.info('Schema upgrade complete.')
     return True

@@ -26,9 +26,11 @@ from pogom.models import (init_database, create_tables, drop_tables,
                           verify_table_encoding, verify_database_schema)
 from pogom.webhook import wh_updater
 
+from pogom.osm import exgyms
 from pogom.proxy import initialize_proxies
 from pogom.search import search_overseer_thread
 from time import strftime
+
 
 
 class LogFilter(logging.Filter):
@@ -257,6 +259,16 @@ def main():
         log.critical(
             "You can't use no-server and only-server at the same time, silly.")
         sys.exit(1)
+
+    if args.ex_gyms:
+        if args.geofence_file == '':
+            log.critical('A geofence is required to find EX-gyms')
+            sys.exit(1)
+        else:
+            exgyms(args.geofence_file)
+            log.info('Finished checking gyms against OSM parks, exiting')
+            sys.exit(1)
+
 
     # Abort if status name is not valid.
     regexp = re.compile('^([\w\s\-.]+)$')
