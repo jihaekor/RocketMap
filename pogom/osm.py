@@ -12,6 +12,7 @@ app = Flask(__name__)
 log = logging.getLogger(__name__)
 db = init_database(app)
 
+
 def ex_query(s, w, n, e):
 
     # Query Overpass for known gym areas
@@ -35,7 +36,7 @@ def ex_query(s, w, n, e):
         way[landuse=greenfield];
         way[natural=scrub];
         way[natural=grassland];
-        way[landuse=farmyard];    
+        way[landuse=farmyard];
     );
     out body;
     >;

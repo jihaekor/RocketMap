@@ -31,6 +31,7 @@ from pogom.proxy import initialize_proxies
 from pogom.search import search_overseer_thread
 from time import strftime
 
+
 class LogFilter(logging.Filter):
 
     def __init__(self, level):
