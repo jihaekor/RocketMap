@@ -1866,7 +1866,8 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
     if not wild_pokemon and not nearby_pokemon:
         # ...and there are no gyms/pokestops then it's unusable/bad.
         if not forts:
-            log.warning('Bad scan. Parsing found absolutely nothing.')
+            log.warning('Bad scan. Parsing found absolutely nothing'
+                        + ' using account %s.', account['username'])
             log.info('Common causes: captchas or IP bans.')
         elif not args.no_pokemon:
             # When gym scanning we'll go over the speed limit
@@ -2213,6 +2214,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                             wh_raid = raids[f.id].copy()
                             wh_raid.update({
                                 'gym_id': b64_gym_id,
+                                'team_id': f.owned_by_team,
                                 'spawn': raid_info.raid_spawn_ms / 1000,
                                 'start': raid_info.raid_battle_ms / 1000,
                                 'end': raid_info.raid_end_ms / 1000,
