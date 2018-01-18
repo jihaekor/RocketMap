@@ -894,6 +894,10 @@ var StoreOptions = {
         default: false,
         type: StoreTypes.Boolean
     },
+     'showParkGymsOnly': {
+        default: false,
+        type: StoreTypes.Boolean
+    },
     'showOpenGymsOnly': {
         default: false,
         type: StoreTypes.Boolean
