@@ -10,6 +10,7 @@ var $selectStyle
 var $selectIconSize
 var $switchOpenGymsOnly
 var $switchParkGymsOnly
+var $switchParkRaidGymsOnly
 var $switchActiveRaidGymsOnly
 var $switchRaidMinLevel
 var $switchRaidMaxLevel
@@ -450,6 +451,7 @@ function initSidebar() {
     $('#gyms-filter-wrapper').toggle(Store.get('showGyms'))
     $('#team-gyms-only-switch').val(Store.get('showTeamGymsOnly'))
     $('#raids-switch').prop('checked', Store.get('showRaids'))
+    $('#raid-park-gym-switch').prop('checked', Store.get('showParkRaidsOnly'))
     $('#raid-active-gym-switch').prop('checked', Store.get('showActiveRaidsOnly'))
     $('#raid-min-level-only-switch').val(Store.get('showRaidMinLevel'))
     $('#raid-max-level-only-switch').val(Store.get('showRaidMaxLevel'))
@@ -1149,7 +1151,8 @@ function updateGymMarker(item, marker) {
             scaledSize: new google.maps.Size(48, 48)
         })
         marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1)
-    } else if (item.raid && item.raid.end > Date.now() && Store.get('showRaids') && !Store.get('showActiveRaidsOnly') && raidLevel >= Store.get('showRaidMinLevel') && raidLevel <= Store.get('showRaidMaxLevel')) {
+    } else if (item.raid && item.raid.end > Date.now() && Store.get('showRaids') && !Store.get('showActiveRaidsOnly') &&
+        raidLevel >= Store.get('showRaidMinLevel') && !Store.get('showParkRaidsOnly') && raidLevel <= Store.get('showRaidMaxLevel')) {
         marker.setIcon({
             url: 'static/images/gym/' + gymTypes[item.team_id] + '_' + getGymLevel(item) + '_' + item['raid']['level'] + '.png',
             scaledSize: new google.maps.Size(48, 48)
@@ -1757,6 +1760,13 @@ function processGym(i, item) {
         if (Store.get('showRaids') && !isValidRaid(item.raid)) {
             removeGymFromMap(item['gym_id'])
             return true
+        }
+
+        if (Store.get('showParkRaidsOnly')) {
+            if (item.park === false) {
+                removeGymFromMap(item['gym_id'])
+                return true
+            }
         }
 
         if (Store.get('showActiveRaidsOnly')) {
@@ -2476,6 +2486,14 @@ $(function () {
 
     $switchParkGymsOnly.on('change', function () {
         Store.set('showParkGymsOnly', this.checked)
+        lastgyms = false
+        updateMap()
+    })
+
+    $switchParkRaidGymsOnly = $('#raid-park-gym-switch')
+
+    $switchParkRaidGymsOnly.on('change', function () {
+        Store.set('showParkRaidsOnly', this.checked)
         lastgyms = false
         updateMap()
     })

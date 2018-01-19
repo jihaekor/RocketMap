@@ -2197,6 +2197,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                     if f.HasField('raid_info'):
                         raids[f.id] = {
                             'gym_id': f.id,
+                            'park': park_id,
                             'level': raid_info.raid_level,
                             'spawn': datetime.utcfromtimestamp(
                                 raid_info.raid_spawn_ms / 1000.0),

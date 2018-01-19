@@ -874,6 +874,10 @@ var StoreOptions = {
         default: false,
         type: StoreTypes.Boolean
     },
+    'showParkRaidsOnly': {
+        default: false,
+        type: StoreTypes.Boolean
+    },
     'showActiveRaidsOnly': {
         default: false,
         type: StoreTypes.Boolean
