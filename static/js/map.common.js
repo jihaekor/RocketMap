@@ -871,7 +871,7 @@ var StoreOptions = {
         type: StoreTypes.Number
     },
     'remember_text_level_notify': {
-        default: '',
+        default: 0,
         type: StoreTypes.Number
     },
     'showRaids': {

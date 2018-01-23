@@ -1055,10 +1055,13 @@ function isNotifyPerfectionPoke(poke) {
         const perfection = getIv(poke['individual_attack'], poke['individual_defense'], poke['individual_stamina'])
         const level = getPokemonLevel(poke['cp_multiplier'])
 
-        hasHighIV = notifiedMinPerfection > 0 && perfection >= notifiedMinPerfection
-        hasHighLevel = notifiedMinLevel > 0 && level >= notifiedMinLevel
+        const hasHighIV = notifiedMinPerfection > 0 && perfection >= notifiedMinPerfection
+        const hasHighLevel = notifiedMinLevel > 0 && level >= notifiedMinLevel
 
-        hasHighAttributes = (hasHighIV && !(notifiedMinLevel > 0)) || (hasHighLevel && !(notifiedMinPerfection > 0)) || hasHighLevel && hasHighIV
+        const shouldNotifyForIV = (hasHighIV && notifiedMinLevel <= 0)
+        const shouldNotifyForLevel = (hasHighLevel && (hasHighIV || notifiedMinPerfection <= 0))
+
+        hasHighAttributes = shouldNotifyForIV || shouldNotifyForLevel
     }
 
     return hasHighAttributes
@@ -2783,8 +2786,8 @@ $(function () {
             if (isNaN(notifiedMinLevel) || notifiedMinLevel <= 0) {
                 notifiedMinLevel = ''
             }
-            if (notifiedMinLevel > 40) {
-                notifiedMinLevel = 40
+            if (notifiedMinLevel > 35) {
+                notifiedMinLevel = 35
             }
             $textLevelNotify.val(notifiedMinLevel)
             Store.set('remember_text_level_notify', notifiedMinLevel)
