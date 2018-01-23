@@ -172,10 +172,12 @@ def rpc_login_sequence(args, api, account):
 
     try:
         req = api.create_request()
-        req.download_remote_config_version(platform=1,
-                                           app_version=app_version)
-        send_generic_request(req, account, settings=True, buddy=False,
-                             inbox=False)
+        req.download_remote_config_version(
+            platform=1,
+            device_model=api.device_info['device_model_boot'],
+            app_version=app_version)
+        send_generic_request(
+            req, account, settings=True, buddy=False, inbox=False)
 
         total_req += 1
         time.sleep(random.uniform(.53, 1.1))
@@ -730,11 +732,12 @@ class AccountSet(object):
                         empty_account = account
                     continue
 
-                else:
+                elif self.kph > 0:
                     seconds_passed = now - last_scanned
                     old_coords = account.get('last_coords', coords_to_scan)
                     consecutive_failures = account.get('consecutive_failures', 0)
                     distance_m = distance(old_coords, coords_to_scan)
+
                     cooldown_time_sec = distance_m / self.kph * 3.6
                     
                     if seconds_passed >= cooldown_time_sec:
@@ -750,6 +753,9 @@ class AccountSet(object):
                             best_distance = distance_m
                             best_failure_count = consecutive_failures
                             best_account = account
+                            
+                else:
+                    best_account = account
 
             if best_account:
                 account = best_account
