@@ -1055,8 +1055,8 @@ function isNotifyPerfectionPoke(poke) {
         const perfection = getIv(poke['individual_attack'], poke['individual_defense'], poke['individual_stamina'])
         const level = getPokemonLevel(poke['cp_multiplier'])
 
-        const hasHighIV = notifiedMinPerfection > 0 && perfection >= notifiedMinPerfection
-        const hasHighLevel = notifiedMinLevel > 0 && level >= notifiedMinLevel
+        hasHighIV = notifiedMinPerfection > 0 && perfection >= notifiedMinPerfection
+        hasHighLevel = notifiedMinLevel > 0 && level >= notifiedMinLevel
 
         const shouldNotifyForIV = (hasHighIV && notifiedMinLevel <= 0)
         const shouldNotifyForLevel = (hasHighLevel && (hasHighIV || notifiedMinPerfection <= 0))
