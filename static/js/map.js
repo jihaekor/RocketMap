@@ -1065,7 +1065,7 @@ function isNotifyPerfectionPoke(poke) {
 }
 
 function isNotifyPoke(poke) {
-    const    = notifiedPokemon.indexOf(poke['pokemon_id']) > -1 || notifiedRarity.indexOf(poke['pokemon_rarity']) > -1
+    const isOnNotifyList = notifiedPokemon.indexOf(poke['pokemon_id']) > -1 || notifiedRarity.indexOf(poke['pokemon_rarity']) > -1
     const isNotifyPerfectionPkmn = isNotifyPerfectionPoke(poke)
     const showStats = Store.get('showPokemonStats')
 
