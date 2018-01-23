@@ -3115,16 +3115,16 @@ def database_migrate(db, old_ver):
         db.execute_sql('DROP TABLE `gympokemon_old`;')
         
         # Drop and add CONSTRAINT_2 with the <= fix.
-        db.execute_sql('ALTER TABLE `spawnpoint` '
+        db.execute_sql('ALTER TABLE `spawnpoint` ' +
                        'DROP CONSTRAINT CONSTRAINT_2;')
         db.execute_sql('ALTER TABLE `spawnpoint` '
                        'ADD CONSTRAINT CONSTRAINT_2 ' +
                        'CHECK (`earliest_unseen` <= 3600);')
 
         # Drop and add CONSTRAINT_4 with the <= fix.
-        db.execute_sql('ALTER TABLE `spawnpoint` '
+        db.execute_sql('ALTER TABLE `spawnpoint` ' +
                        'DROP CONSTRAINT CONSTRAINT_4;')
-        db.execute_sql('ALTER TABLE `spawnpoint` '
+        db.execute_sql('ALTER TABLE `spawnpoint` ' +
                        'ADD CONSTRAINT CONSTRAINT_4 CHECK ' +
                        '(`latest_seen` <= 3600);')
 
