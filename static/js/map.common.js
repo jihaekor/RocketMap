@@ -871,7 +871,7 @@ var StoreOptions = {
         type: StoreTypes.Number
     },
     'showRaids': {
-        default: false,
+        default: true,
         type: StoreTypes.Boolean
     },
     'showActiveRaidsOnly': {
@@ -879,7 +879,7 @@ var StoreOptions = {
         type: StoreTypes.Boolean
     },
     'showRaidMinLevel': {
-        default: 1,
+        default: 3,
         type: StoreTypes.Number
     },
     'showRaidMaxLevel': {
@@ -923,7 +923,7 @@ var StoreOptions = {
         type: StoreTypes.Boolean
     },
     'showPokestops': {
-        default: true,
+        default: false,
         type: StoreTypes.Boolean
     },
     'showLuredPokestopsOnly': {
@@ -943,11 +943,11 @@ var StoreOptions = {
         type: StoreTypes.Boolean
     },
     'showWeatherCells': {
-        default: false,
+        default: true,
         type: StoreTypes.Boolean
     },
     'showS2Cells': {
-        default: false,
+        default: true,
         type: StoreTypes.Boolean
     },
     'showWeatherAlerts': {
@@ -1051,7 +1051,7 @@ var StoreOptions = {
         type: StoreTypes.Boolean
     },
     'showLocationMarker': {
-        default: true,
+        default: false,
         type: StoreTypes.Boolean
     },
     'isLocationMarkerMovable': {
@@ -1059,7 +1059,7 @@ var StoreOptions = {
         type: StoreTypes.Boolean
     },
     'showSearchMarker': {
-        default: true,
+        default: false,
         type: StoreTypes.Boolean
     },
     'isSearchMarkerMovable': {
