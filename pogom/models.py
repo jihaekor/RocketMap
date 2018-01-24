@@ -43,7 +43,7 @@ args = get_args()
 flaskDb = FlaskDB()
 cache = TTLCache(maxsize=100, ttl=60 * 5)
 
-db_schema_version = 23
+db_schema_version = 22
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
@@ -2119,14 +2119,9 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 'weight': None,
                 'gender': p.pokemon_data.pokemon_display.gender,
                 'form': None,
-                'weather_boosted_condition': None
+                'weather_boosted_condition': p.pokemon_data.pokemon_display.weather_boosted_condition
 
             }
-
-            # Check Weather
-            weather = p.pokemon_data.pokemon_display.weather_boosted_condition
-            if weather:
-                pokemon[p.encounter_id]['weather_boosted_condition'] = weather
 
             # Check for Unown's alphabetic character.
             if pokemon_id == 201:
@@ -3239,7 +3234,6 @@ def database_migrate(db, old_ver):
                        'ADD CONSTRAINT CONSTRAINT_4 CHECK ' +
                        '(`latest_seen` <= 3600);')
 
-    if old_ver < 23:
         migrate(
             migrator.add_column('pokemon', 'weather_boosted_condition',
                                 SmallIntegerField(null=True))
