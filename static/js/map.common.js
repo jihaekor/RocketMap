@@ -1051,7 +1051,7 @@ var StoreOptions = {
         type: StoreTypes.Boolean
     },
     'showLocationMarker': {
-        default: true,
+        default: false,
         type: StoreTypes.Boolean
     },
     'isLocationMarkerMovable': {
