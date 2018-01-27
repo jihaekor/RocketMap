@@ -684,7 +684,7 @@ function pokemonLabel(item) {
 }
 
 function isExRaidEligibleGym(gym) {
-    return gym.park === true || gym.sponsor !== 0
+    return gym.park === true || (gym.sponsor !== null && gym.sponsor !== 0)
 }
 
 function isOngoingRaid(raid) {

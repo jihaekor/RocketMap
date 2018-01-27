@@ -2741,7 +2741,7 @@ def db_updater(q, db):
                 bulk_upsert(model, data, db)
                 q.task_done()
 
-                log.debug('Upserted to %s, %d records (upsert queue '
+                log.info('Upserted to %s, %d records (upsert queue '
                           'remaining: %d) in %.6f seconds.',
                           model.__name__,
                           len(data),
@@ -2857,6 +2857,7 @@ def bulk_upsert(cls, data, db):
         first_row = row
         break
     # Convert the row to its fields, sorted by peewee.
+    log.info(first_row.keys())
     row_fields = sorted(first_row.keys(), key=lambda x: x._sort_key)
     row_fields = map(lambda x: x.name, row_fields)
     # Translate to proper column name, e.g. foreign keys.
