@@ -966,6 +966,10 @@ var StoreOptions = {
         default: false,
         type: StoreTypes.Boolean
     },
+    'showS2ExRaidCells': {
+        default: true,
+        type: StoreTypes.Boolean
+    },
     'hideNotNotified': {
         default: false,
         type: StoreTypes.Boolean

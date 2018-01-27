@@ -45,12 +45,12 @@ def get_cell_from_string(str_id):
         return s2sphere.Cell(s2sphere.CellId(raw_id))
 
 
-def get_s2_coverage(swLat, swLng, neLat, neLng):
+def get_s2_coverage(swLat, swLng, neLat, neLng, level=10):
     geoms = []
 
     r = s2sphere.RegionCoverer()
-    r.min_level = 10
-    r.max_level = 10
+    r.min_level = level
+    r.max_level = level
     r.max_cells = 40
     p1 = s2sphere.LatLng.from_degrees(float(swLat), float(swLng))
     p2 = s2sphere.LatLng.from_degrees(float(neLat), float(neLng))

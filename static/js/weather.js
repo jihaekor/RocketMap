@@ -80,6 +80,23 @@ function processS2Cell(i, item) { // eslint-disable-line no-unused-vars
 
 
 /**
+ * This should move out of weather.js, but just re-using the functions here...
+ */
+function processS2ExRaidCell(i, item) { // eslint-disable-line no-unused-vars
+    if (!Store.get('showS2ExRaidCells')) {
+        return false
+    }
+
+    var s2CellId = item.s2_cell_id
+    if (!(s2CellId in mapData.s2cells)) {
+        safeDelMarker(item)
+        item.marker = setupS2ExRaidCellPolygon(item)
+        mapData.s2cells[s2CellId] = item
+    }
+}
+
+
+/**
  * Do main work with array of weather alerts
  * @param weatherAlerts
  */
@@ -235,6 +252,15 @@ function setupS2CellPolygon(item) {
         strokeWeight: 1,
         fillOpacity: 0,
         fillColor: '#00ff00'
+    })
+}
+
+function setupS2ExRaidCellPolygon(item) {
+    return new google.maps.Polygon({
+        paths: item.vertices,
+        strokeColor: '#840000',
+        strokeOpacity: 0.8,
+        strokeWeight: 1
     })
 }
 

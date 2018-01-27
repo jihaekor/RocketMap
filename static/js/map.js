@@ -504,6 +504,7 @@ function initSidebar() {
     $('#map-service-provider').val(Store.get('mapServiceProvider'))
     $('#weather-cells-switch').prop('checked', Store.get('showWeatherCells'))
     $('#s2cells-switch').prop('checked', Store.get('showS2Cells'))
+    $('#s2exraidcells-switch').prop('checked', Store.get('showS2ExRaidCells'))
     $('#weather-alerts-switch').prop('checked', Store.get('showWeatherAlerts'))
 
     // Only create the Autocomplete element if it's enabled in template.
@@ -1241,7 +1242,7 @@ function updateGymMarker(item, marker) {
         })
         marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1)
     } else if (item.raid && item.raid.end > Date.now() && Store.get('showRaids') && !Store.get('showActiveRaidsOnly') &&
-        raidLevel >= Store.get('showRaidMinLevel') && !Store.get('showParkRaidsOnly') && raidLevel <= Store.get('showRaidMaxLevel')) {
+        raidLevel >= Store.get('showRaidMinLevel') && raidLevel <= Store.get('showRaidMaxLevel')) {
         marker.setIcon({
             url: 'static/images/gym/' + gymTypes[item.team_id] + '_' + getGymLevel(item) + '_' + item['raid']['level'] + '.png',
             scaledSize: new google.maps.Size(48, 48)
@@ -1568,6 +1569,7 @@ function loadRawData() {
     var loadLuredOnly = Boolean(Store.get('showLuredPokestopsOnly'))
     var loadWeather = Store.get('showWeatherCells')
     var loadS2Cells = Store.get('showS2Cells')
+    var loadS2ExRaidCells = Store.get('showS2ExRaidCells')
     var loadWeatherAlerts = Store.get('showWeatherAlerts')
 
     var bounds = map.getBounds()
@@ -1596,6 +1598,7 @@ function loadRawData() {
             'weather': loadWeather,
             's2cells': loadS2Cells,
             'weatherAlerts': loadWeatherAlerts,
+            's2exraids': loadS2ExRaidCells, 
             'lastspawns': lastspawns,
             'swLat': swLat,
             'swLng': swLng,
@@ -1985,6 +1988,7 @@ function updateMap() {
         $.each(result.spawnpoints, processSpawnpoint)
         $.each(result.weather, processWeather)
         $.each(result.s2cells, processS2Cell)
+        $.each(result.s2exraids, processS2ExRaidCell)
         processWeatherAlerts(result.weatherAlerts)
         updateMainCellWeather()
         // showInBoundsMarkers(mapData.pokemons, 'pokemon')
@@ -1995,6 +1999,7 @@ function updateMap() {
         showInBoundsMarkers(mapData.spawnpoints, 'inbound')
         showInBoundsMarkers(mapData.weather, 'weather')
         showInBoundsMarkers(mapData.s2cells, 's2cell')
+        showInBoundsMarkers(mapData.s2exraids, 's2cell')
         showInBoundsMarkers(mapData.weatherAlerts, 's2cell')
         clearStaleMarkers()
 
@@ -3079,6 +3084,10 @@ $(function () {
 
     $('#s2cells-switch').change(function () {
         buildSwitchChangeListener(mapData, ['s2cells'], 'showS2Cells').bind(this)()
+    })
+    
+    $('#s2exraidcells-switch').change(function () {
+        buildSwitchChangeListener(mapData, ['s2exraidcells'], 'showS2ExRaidCells').bind(this)()
     })
 
     $('#weather-alerts-switch').change(function () {

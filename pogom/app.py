@@ -504,6 +504,8 @@ class Pogom(Flask):
             d['s2cells'] = get_s2_coverage(swLat, swLng, neLat, neLng)
         if request.args.get('weatherAlerts', 'false') == 'true':
             d['weatherAlerts'] = get_weather_alerts(swLat, swLng, neLat, neLng)
+        if request.args.get('s2exraids', 'false') == 'true':
+            d['s2exraids'] = get_s2_coverage(swLat, swLng, neLat, neLng, level=12)
 
         return jsonify(d)
 
