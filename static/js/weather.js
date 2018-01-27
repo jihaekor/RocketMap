@@ -88,10 +88,10 @@ function processS2ExRaidCell(i, item) { // eslint-disable-line no-unused-vars
     }
 
     var s2CellId = item.s2_cell_id
-    if (!(s2CellId in mapData.s2cells)) {
+    if (!(s2CellId in mapData.s2exraids)) {
         safeDelMarker(item)
         item.marker = setupS2ExRaidCellPolygon(item)
-        mapData.s2cells[s2CellId] = item
+        mapData.s2exraids[s2CellId] = item
     }
 }
 
