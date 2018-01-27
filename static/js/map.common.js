@@ -863,7 +863,7 @@ var StoreOptions = {
         type: StoreTypes.JSON
     },
     'remember_text_perfection_notify': {
-        default: '',
+        default: 90,
         type: StoreTypes.Number
     },
     'remember_text_level_notify': {
@@ -963,7 +963,7 @@ var StoreOptions = {
         type: StoreTypes.Boolean
     },
     'showPopups': {
-        default: true,
+        default: false,
         type: StoreTypes.Boolean
     },
     'playSound': {
