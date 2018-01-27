@@ -43,7 +43,7 @@ args = get_args()
 flaskDb = FlaskDB()
 cache = TTLCache(maxsize=100, ttl=60 * 5)
 
-db_schema_version = 23
+db_schema_version = 24
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
@@ -407,6 +407,7 @@ class Gym(LatLongModel):
     slots_available = SmallIntegerField()
     enabled = BooleanField()
     park = BooleanField(default=False)
+    sponsor = SmallIntegerField(null=True)
     latitude = DoubleField()
     longitude = DoubleField()
     total_cp = SmallIntegerField()
@@ -534,6 +535,7 @@ class Gym(LatLongModel):
                               Gym.guard_pokemon_id,
                               Gym.slots_available,
                               Gym.park,
+                              Gym.sponsor,
                               Gym.latitude,
                               Gym.longitude,
                               Gym.last_modified,
@@ -2238,8 +2240,13 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 b64_gym_id = str(f.id)
                 gym_display = f.gym_display
                 raid_info = f.raid_info
+                if f.sponsor:
+                    sponsor = f.sponsor
+                else:
+                    sponsor = None
+                log.info('Sponsor: ' + str(sponsor))
+                
                 # Send gyms to webhooks.
-
                 with Gym.database().execution_context():
                     Query = Gym.select().where(Gym.gym_id == f.id).dicts()
                     park_id = None
@@ -2269,6 +2276,8 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                             gym_display.slots_available,
                         'park':
                             park_id,
+                        'sponsor':
+                            sponsor, 
                         'total_cp':
                             gym_display.total_gym_cp,
                         'enabled':
@@ -2294,6 +2303,8 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                         f.id,
                     'park':
                         park_id,
+                    'sponsor':
+                        sponsor,
                     'team_id':
                         f.owned_by_team,
                     'guard_pokemon_id':
@@ -2318,6 +2329,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                         raids[f.id] = {
                             'gym_id': f.id,
                             'park': park_id,
+                            'sponsor': sponsor,
                             'level': raid_info.raid_level,
                             'spawn': datetime.utcfromtimestamp(
                                 raid_info.raid_spawn_ms / 1000.0),
@@ -3361,10 +3373,7 @@ def database_migrate(db, old_ver):
         db.execute_sql('ALTER TABLE `spawnpoint` ' +
                        'ADD CONSTRAINT CONSTRAINT_4 CHECK ' +
                        '(`latest_seen` <= 3600);')
-    if old_ver < 23:
-        migrate(
-            migrator.add_column('gym', 'park', BooleanField(default=False)))
-
+                       
         migrate(
             migrator.add_column('pokemon', 'weather_boosted_condition',
                                 SmallIntegerField(null=True))
@@ -3373,6 +3382,13 @@ def database_migrate(db, old_ver):
     if old_ver < 23:
         db.drop_tables([WorkerStatus])
         db.drop_tables([MainWorker])
+        
+    if old_ver < 24:
+        migrate(
+            migrator.add_column('gym', 'park', BooleanField(default=False)))
+            
+        migrate(
+            migrator.add_column('gym', 'sponsor', SmallIntegerField(null=True)))
 
     # Always log that we're done.
     log.info('Schema upgrade complete.')

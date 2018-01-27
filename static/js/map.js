@@ -683,6 +683,10 @@ function pokemonLabel(item) {
     return contentstring
 }
 
+function isExRaidEligibleGym(gym) {
+    return gym.park === true || gym.sponsor !== null
+}
+
 function isOngoingRaid(raid) {
     return raid && Date.now() < raid.end && Date.now() > raid.start
 }
@@ -1845,7 +1849,7 @@ function processGym(i, item) {
     }
 
     if (Store.get('showParkGymsOnly')) {
-        if (item.park === false) {
+        if (!isExRaidEligibleGym(item)) {
             removeGymFromMap(item['gym_id'])
             return true
         }
@@ -1858,7 +1862,7 @@ function processGym(i, item) {
         }
 
         if (Store.get('showParkRaidsOnly')) {
-            if (item.park === false) {
+            if (!isExRaidEligibleGym(item)) {
                 removeGymFromMap(item['gym_id'])
                 return true
             }
