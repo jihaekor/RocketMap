@@ -406,6 +406,7 @@ class Gym(LatLongModel):
     guard_pokemon_id = SmallIntegerField()
     slots_available = SmallIntegerField()
     enabled = BooleanField()
+    park = BooleanField(default=False)
     latitude = DoubleField()
     longitude = DoubleField()
     total_cp = SmallIntegerField()
@@ -532,6 +533,7 @@ class Gym(LatLongModel):
                               GymDetails.description,
                               Gym.guard_pokemon_id,
                               Gym.slots_available,
+                              Gym.park,
                               Gym.latitude,
                               Gym.longitude,
                               Gym.last_modified,
@@ -598,6 +600,10 @@ class Gym(LatLongModel):
             pass
 
         return result
+
+    @staticmethod
+    def is_gym_park(id, park):
+        Gym.update(park=park).where(Gym.gym_id == str(id)).execute()
 
 
 class Raid(BaseModel):
@@ -2233,6 +2239,14 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 gym_display = f.gym_display
                 raid_info = f.raid_info
                 # Send gyms to webhooks.
+
+                with Gym.database().execution_context():
+                    Query = Gym.select().where(Gym.gym_id == f.id).dicts()
+                    park_id = None
+                    for gym in list(Query):
+                        park_id = gym['park']
+                    log.debug(park_id)
+
                 if 'gym' in args.wh_types:
                     raid_active_until = 0
                     raid_battle_ms = raid_info.raid_battle_ms
@@ -2253,6 +2267,8 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                             f.guard_pokemon_id,
                         'slots_available':
                             gym_display.slots_available,
+                        'park':
+                            park_id,
                         'total_cp':
                             gym_display.total_gym_cp,
                         'enabled':
@@ -2276,6 +2292,8 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 gyms[f.id] = {
                     'gym_id':
                         f.id,
+                    'park':
+                        park_id,
                     'team_id':
                         f.owned_by_team,
                     'guard_pokemon_id':
@@ -2299,6 +2317,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                     if f.HasField('raid_info'):
                         raids[f.id] = {
                             'gym_id': f.id,
+                            'park': park_id,
                             'level': raid_info.raid_level,
                             'spawn': datetime.utcfromtimestamp(
                                 raid_info.raid_spawn_ms / 1000.0),
@@ -2590,7 +2609,6 @@ def parse_gyms(args, gym_responses, wh_update_queue, db_update_queue):
     for g in gym_responses.values():
         gym_state = g.gym_status_and_defenders
         gym_id = gym_state.pokemon_fort_proto.id
-
         gym_details[gym_id] = {
             'gym_id': gym_id,
             'name': g.name,
@@ -3329,6 +3347,7 @@ def database_migrate(db, old_ver):
         db.execute_sql('DROP TABLE `gympokemon_old`;')
 
     if old_ver < 22:
+
         # Drop and add CONSTRAINT_2 with the <= fix.
         db.execute_sql('ALTER TABLE `spawnpoint` ' +
                        'DROP CONSTRAINT CONSTRAINT_2;')
@@ -3342,6 +3361,9 @@ def database_migrate(db, old_ver):
         db.execute_sql('ALTER TABLE `spawnpoint` ' +
                        'ADD CONSTRAINT CONSTRAINT_4 CHECK ' +
                        '(`latest_seen` <= 3600);')
+    if old_ver < 23:
+        migrate(
+            migrator.add_column('gym', 'park', BooleanField(default=False)))
 
         migrate(
             migrator.add_column('pokemon', 'weather_boosted_condition',
