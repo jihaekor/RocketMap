@@ -1130,6 +1130,7 @@ var mapData = {
     spawnpoints: {},
     weather: {},
     s2cells: {},
+    s2exraids: {},
     weatherAlerts: {}
 }
 
