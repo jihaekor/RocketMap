@@ -260,7 +260,9 @@ function setupS2ExRaidCellPolygon(item) {
         paths: item.vertices,
         strokeColor: '#840000',
         strokeOpacity: 0.8,
-        strokeWeight: 1
+        strokeWeight: 1, 
+        fillOpacity: 0,
+        fillColor: '#00ff00'
     })
 }
 

@@ -3087,7 +3087,7 @@ $(function () {
     })
     
     $('#s2exraidcells-switch').change(function () {
-        buildSwitchChangeListener(mapData, ['s2exraidcells'], 'showS2ExRaidCells').bind(this)()
+        buildSwitchChangeListener(mapData, ['s2exraids'], 'showS2ExRaidCells').bind(this)()
     })
 
     $('#weather-alerts-switch').change(function () {
