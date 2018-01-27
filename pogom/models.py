@@ -2323,8 +2323,6 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                     if f.HasField('raid_info'):
                         raids[f.id] = {
                             'gym_id': f.id,
-                            'park': park_id,
-                            'sponsor': f.sponsor,
                             'level': raid_info.raid_level,
                             'spawn': datetime.utcfromtimestamp(
                                 raid_info.raid_spawn_ms / 1000.0),
@@ -2355,6 +2353,8 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                             wh_raid.update({
                                 'gym_id': b64_gym_id,
                                 'team_id': f.owned_by_team,
+                                'park': park_id,
+                                'sponsor': f.sponsor,
                                 'spawn': raid_info.raid_spawn_ms / 1000,
                                 'start': raid_info.raid_battle_ms / 1000,
                                 'end': raid_info.raid_end_ms / 1000,
@@ -2732,16 +2732,11 @@ def db_updater(q, db):
             # Loop the queue.
             while True:
                 model, data = q.get()
-                log.info('Upserting to %s, %d records (upsert queue remaining: %d)',
-                          model.__name__,
-                          len(data),
-                          q.qsize())
-
                 start_timer = default_timer()
                 bulk_upsert(model, data, db)
                 q.task_done()
 
-                log.info('Upserted to %s, %d records (upsert queue '
+                log.debug('Upserted to %s, %d records (upsert queue '
                           'remaining: %d) in %.6f seconds.',
                           model.__name__,
                           len(data),
@@ -2857,7 +2852,6 @@ def bulk_upsert(cls, data, db):
         first_row = row
         break
     # Convert the row to its fields, sorted by peewee.
-    log.info(first_row.keys())
     row_fields = sorted(first_row.keys(), key=lambda x: x._sort_key)
     row_fields = map(lambda x: x.name, row_fields)
     # Translate to proper column name, e.g. foreign keys.
