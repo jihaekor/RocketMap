@@ -8,6 +8,9 @@ import math
 from bisect import bisect_left
 from datetime import datetime
 
+from datetime import datetime
+from s2sphere import LatLng
+from bisect import bisect_left
 from flask import Flask, abort, jsonify, render_template, request,\
     make_response, send_from_directory
 from flask.json import JSONEncoder
@@ -44,7 +47,6 @@ def convert_pokemon_list(pokemon):
     pokemon_result = []
     for p in pokemon:
         p['pokemon_name'] = get_pokemon_name(p['pokemon_id'])
-        p['pokemon_rarity'] = get_pokemon_rarity(p['pokemon_id'])
         p['pokemon_types'] = get_pokemon_types(p['pokemon_id'])
         p['encounter_id'] = str(p['encounter_id'])
         if args.china:
