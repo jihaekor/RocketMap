@@ -753,6 +753,15 @@ function gymLabel(gym, includeMembers = true) {
             </span>
         </div>`
     }
+    
+    if (isExRaidEligibleGym(gym)) {
+        subtitle += `
+        <div>
+            <span class='gym info exraid'>
+              Ex-Raid Eligible
+            </span>
+        </div>`
+    }
 
     if ((isUpcomingRaid || isRaidStarted) && isRaidFilterOn && isGymSatisfiesRaidMinMaxFilter(raid)) {
         const raidColor = ['252,112,176', '255,158,22', '184,165,221']
