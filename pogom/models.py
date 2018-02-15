@@ -2273,7 +2273,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 # Send gyms to webhooks.
                 with Gym.database().execution_context():
                     Query = Gym.select().where(Gym.gym_id == f.id).dicts()
-                    park_id = None
+                    park_id = False
                     for gym in list(Query):
                         park_id = gym['park']
                     log.debug(park_id)
