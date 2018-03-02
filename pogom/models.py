@@ -2311,14 +2311,12 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                             b64_gym_id,
                         'team_id':
                             f.owned_by_team,
-                        'park':
-                            park,
                         'guard_pokemon_id':
                             f.guard_pokemon_id,
                         'slots_available':
                             gym_display.slots_available,
                         'park':
-                            park_id,
+                            park,
                         'sponsor':
                             f.sponsor, 
                         'total_cp':
@@ -2343,8 +2341,6 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 gyms[f.id] = {
                     'gym_id':
                         f.id,
-                    'park':
-                        park_id,
                     'sponsor':
                         f.sponsor,
                     'team_id':
@@ -2403,7 +2399,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                             wh_raid.update({
                                 'gym_id': b64_gym_id,
                                 'team_id': f.owned_by_team,
-                                'park': park_id,
+                                'park': park,
                                 'sponsor': f.sponsor,
                                 'spawn': raid_info.raid_spawn_ms / 1000,
                                 'start': raid_info.raid_battle_ms / 1000,
@@ -3440,8 +3436,7 @@ def database_migrate(db, old_ver):
             
         migrate(
             migrator.add_column('gym', 'sponsor', SmallIntegerField(null=True)))
-
-    if old_ver < 24:
+            
         migrate(
             migrator.drop_index('pokemon', 'pokemon_disappear_time'),
             migrator.add_index('pokemon',
