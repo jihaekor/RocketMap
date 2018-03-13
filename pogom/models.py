@@ -2843,20 +2843,6 @@ def clean_db_loop(args):
             if args.db_cleanup_worker > 0:
                 db_cleanup_worker_status(args.db_cleanup_worker)
 
-                # Remove old weather
-                query = (Weather
-                         .delete()
-                         .where((Weather.last_updated <
-                                 (datetime.utcnow() - timedelta(minutes=15)))))
-                query.execute()
-
-                # Remove expired HashKeys
-                query = (HashKeys
-                         .delete()
-                         .where(HashKeys.expires <
-                                (datetime.now() - timedelta(days=1))))
-                query.execute()
-
             # Check if it's time to run full database cleanup.
             now = default_timer()
             if now - full_cleanup_timer > full_cleanup_secs:
@@ -2910,6 +2896,13 @@ def db_cleanup_regular():
                  .delete()
                  .where((HashKeys.expires < now - timedelta(days=1)) |
                         (HashKeys.last_updated < now - timedelta(days=7))))
+        query.execute()
+        
+        # Remove old weather
+        query = (Weather
+                 .delete()
+                 .where((Weather.last_updated <
+                         (datetime.utcnow() - timedelta(minutes=15)))))
         query.execute()
 
     time_diff = default_timer() - start_timer
